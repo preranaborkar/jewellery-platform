@@ -10,7 +10,7 @@ import {
   ChevronRight,
   Sparkles,
   Award,
-  Users
+  Gem
 } from 'lucide-react';
 
 const Home = () => {
@@ -84,10 +84,10 @@ const Home = () => {
       description: "All diamonds and gemstones come with authenticity certificates"
     },
     {
-      icon: Users,
-      title: "Expert Consultation",
-      description: "Get personalized advice from our jewelry experts"
-    }
+  icon: Gem,
+  title: "New Arrivals",
+  description: "Discover our latest jewelry designs"
+}
   ];
 
   // Auto-slide functionality

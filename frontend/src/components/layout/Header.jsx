@@ -79,7 +79,7 @@ const Header = () => {
             className="flex items-center space-x-2 text-[#523A28] hover:text-[#A47551] transition-colors duration-300"
           >
             
-            <span className="text-xl lg:text-2xl font-bold tracking-wide">
+            <span className="text-xl lg:text-3xl font-bold tracking-wide">
               {isAdminPage ? 'Admin Panel' : 'SváRIN  '}
             </span>
           </Link>
