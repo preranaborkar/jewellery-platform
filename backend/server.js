@@ -7,7 +7,7 @@ const { createServer } = require('http');
 const { Server } = require('socket.io');
 const cookieParser = require('cookie-parser');
 require('dotenv').config();
-
+const passport = require('./src/config/passport');
 
 // Import database connection
 const connectDB = require('./src/config/database');
@@ -19,7 +19,7 @@ const categoryRoutes = require('./src/routes/categoryRoutes');
 const adminProductRoutes = require('./src/routes/adminProductRoutes');
 const cartRoutes = require('./src/routes/cartRoutes');
 const wishlistRoutes= require('./src/routes/wishlistRoutes');
-
+// const adminOrderRoutes = require('./src/routes/adminOrderRoutes');
 // const orderRoutes = require('./src/routes/orderRoutes');
 // const userRoutes = require('./src/routes/userRoutes');
 // const reviewRoutes = require('./src/routes/reviewRoutes');
@@ -32,6 +32,11 @@ const errorHandler = require('./src/middleware/errorHandler');
 
 const app = express();
 const server = createServer(app);
+app.use(passport.initialize());
+
+// Trust the first proxy (needed for express-rate-limit to correctly get client IP)
+app.set('trust proxy', 1);
+
 
 // Middleware
 app.use(cookieParser());
@@ -144,6 +149,8 @@ app.use('/api/admin', adminProductRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 // app.use('/api/orders', orderRoutes);
+// app.use('/api/admin/orders', adminOrderRoutes);
+
 // app.use('/api/users', userRoutes);
 // app.use('/api/reviews', reviewRoutes);
 

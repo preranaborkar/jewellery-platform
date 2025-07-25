@@ -1,7 +1,7 @@
 // backend/src/controllers/authController.js
 const { validationResult } = require('express-validator');
 const User = require('../models/User');
-const { generateOTP, sendOTPEmail, sendWelcomeEmail ,sendPasswordResetEmail} = require('../utils/emailService');
+const { generateOTP, sendOTPEmail, sendWelcomeEmail, sendPasswordResetEmail } = require('../utils/emailService');
 const { generateToken } = require('../utils/tokenService');
 const { verifyGoogleToken } = require('../utils/googleAuth');
 const crypto = require('crypto');
@@ -109,9 +109,13 @@ const verifyOTP = async (req, res) => {
 
     const { email, otp } = req.body;
 
+
+    console.log('Email:', email);
+    console.log('Received OTP:', otp, 'Type:', typeof otp);
+
     // Find user with email and include OTP fields
     const user = await User.findOne({ email }).select('+otp +otpExpiry');
-    
+
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -156,7 +160,7 @@ const verifyOTP = async (req, res) => {
     user.otp = undefined;
     user.otpExpiry = undefined;
     user.lastLogin = new Date();
-    
+
     await user.save();
 
     // Send welcome email
@@ -168,7 +172,7 @@ const verifyOTP = async (req, res) => {
     }
 
     // Generate new token
-    const token = generateToken(user._id,user.role);
+    const token = generateToken(user._id, user.role);
 
     // Set cookie
     res.cookie('token', token, {
@@ -200,6 +204,69 @@ const verifyOTP = async (req, res) => {
 };
 
 
+const resendOTP = async (req, res) => {
+  try {
+    // Check for validation errors
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed',
+        errors: errors.array()
+      });
+    }
+    const { email } = req.body;
+
+    console.log('Resending OTP to:', email);
+    // Find user with email
+    const user = await User.findOne({ email }).select('+otp +otpExpiry');
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found with this email'
+      });
+    }
+    // Check if user is already verified
+    if (user.isVerified) {
+      return res.status(400).json({
+        success: false,
+        message: 'User is already verified'
+      });
+    }
+    // Generate new OTP
+    const otp = generateOTP();
+    const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    // Update user with new OTP
+    user.otp = otp;
+    user.otpExpiry = otpExpiry;
+    await user.save();
+    // Send new OTP email
+    try {
+      await sendOTPEmail(email, otp, user.firstName);
+    } catch (emailError) {
+      console.error('Email sending failed:', emailError);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to send OTP email. Please try again.'
+      });
+    }
+    res.status(200).json({
+      success: true,
+      message: 'New OTP sent to your email address.',
+      data: {
+        email: user.email,
+        otpExpiry: otpExpiry // Send expiry time to frontend if needed
+      }
+    });
+  } catch (error) {
+    console.error('Resend OTP error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+};
+
 const login = async (req, res) => {
   try {
     // Check for validation errors
@@ -216,7 +283,7 @@ const login = async (req, res) => {
 
     // Find user with email and include password field
     const user = await User.findOne({ email }).select('+password');
-    
+
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -232,25 +299,33 @@ const login = async (req, res) => {
       });
     }
 
+    // CHECK: If user was created via Google OAuth and has no password
+    if (!user.password || user.password === null || user.password === undefined) {
+      return res.status(400).json({
+        success: false,
+        message: 'This account was created with Google. Please sign in with Google instead.'
+      });
+    }
+
     // Compare password
     const isPasswordValid = await user.comparePassword(password);
-    
+    console.log(isPasswordValid);
+
     if (!isPasswordValid) {
-      // Increment login attempts
-      await user.incLoginAttempts();
-      
+
+
       return res.status(401).json({
         success: false,
         message: 'Invalid email or password'
       });
     }
 
-    
+
 
     // Generate token
     const tokenExpiry = rememberMe ? '7d' : '1d';
     console.log(user.role);
-    const token = generateToken(user._id, user.role,tokenExpiry);
+    const token = generateToken(user._id, user.role, tokenExpiry);
 
     // Set cookie
     const cookieMaxAge = rememberMe ? 7 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
@@ -286,260 +361,35 @@ const login = async (req, res) => {
 };
 
 
-const googleLogin = async (req, res) => {
+// controllers/authController.js
+const googleCallback = (req, res) => {
   try {
-    // Check for validation errors
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        success: false,
-        message: 'Validation failed',
-        errors: errors.array()
-      });
-    }
+    const { user, token } = req.user;
 
-    const { token } = req.body;
+    // Instead of sending JSON, redirect to frontend with token and user data as URL parameters
+    // Encode the user data to pass it safely
+    const userData = encodeURIComponent(JSON.stringify({
+      userId: user._id,
+      email: user.email,
+      fullName: user.fullName,
+      role: user.role || 'customer',
+      isVerified: true,
+      avatar: user.avatar
+    }));
 
-    // Verify Google token
-    const googleVerification = await verifyGoogleToken(token);
-    
-    if (!googleVerification.success) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid Google token'
-      });
-    }
 
-    const { googleId, email, firstName, lastName, avatar, emailVerified } = googleVerification.data;
 
-    // Check if user exists with this email
-    let user = await User.findOne({ email });
-
-    if (user) {
-      // User exists - Link Google account if not already linked
-      if (!user.googleId) {
-        user.googleId = googleId;
-        user.avatar = avatar || user.avatar;
-        user.isVerified = emailVerified || user.isVerified;
-        user.lastLogin = new Date();
-        await user.save();
-      } else if (user.googleId !== googleId) {
-        return res.status(400).json({
-          success: false,
-          message: 'This email is already associated with a different Google account'
-        });
-      } else {
-        // Update last login and avatar
-        user.lastLogin = new Date();
-        user.avatar = avatar || user.avatar;
-        await user.save();
-      }
-    } else {
-      // Create new user with Google account
-      user = new User({
-        firstName,
-        lastName,
-        email,
-        googleId,
-        avatar,
-        isVerified: emailVerified,
-        isActive: true,
-        lastLogin: new Date()
-      });
-
-      await user.save();
-
-      // Send welcome email
-      try {
-        await sendWelcomeEmail(user.email, user.firstName);
-      } catch (emailError) {
-        console.error('Welcome email sending failed:', emailError);
-        // Don't fail the login if welcome email fails
-      }
-    }
-
-    // Check if account is active
-    if (!user.isActive) {
-      return res.status(401).json({
-        success: false,
-        message: 'Account is deactivated. Please contact support.'
-      });
-    }
-
-    // Generate token
-    const jwtToken = generateToken(user._id,user.role);
-
-    // Set cookie
-    res.cookie('token', jwtToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
-    });
-
-    res.status(200).json({
-      success: true,
-      message: user.isNew ? 'Account created and logged in successfully' : 'Login successful',
-      data: {
-        userId: user._id,
-        email: user.email,
-        fullName: user.fullName,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        phone: user.phone,
-        role: user.role,
-        isVerified: user.isVerified,
-        lastLogin: user.lastLogin,
-        avatar: user.avatar,
-        loginMethod: 'google'
-      }
-    });
-
+    // Use full frontend URL for redirect
+    // FIXED: Changed 'user' to 'customer' to match frontend expectation
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    res.redirect(`${frontendUrl}/auth/google/success?token=${token}&customer=${userData}`);
   } catch (error) {
-    console.error('Google login error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error'
-    });
+    console.error('Google callback error:', error);
+    // Redirect to frontend with error
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    res.redirect(`${frontendUrl}/login?error=${encodeURIComponent('Authentication failed')}`);
   }
 };
-
-// Add this function to link Google account to existing user
-const linkGoogleAccount = async (req, res) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        success: false,
-        message: 'Validation failed',
-        errors: errors.array()
-      });
-    }
-
-    const { token } = req.body;
-    const userId = req.user.id; // From auth middleware
-
-    // Verify Google token
-    const googleVerification = await verifyGoogleToken(token);
-    
-    if (!googleVerification.success) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid Google token'
-      });
-    }
-
-    const { googleId, email, avatar } = googleVerification.data;
-
-    // Get current user
-    const user = await User.findById(userId);
-    
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
-    }
-
-    // Check if Google account is already linked to another user
-    const existingGoogleUser = await User.findOne({ googleId });
-    
-    if (existingGoogleUser && existingGoogleUser._id.toString() !== userId) {
-      return res.status(400).json({
-        success: false,
-        message: 'This Google account is already linked to another user'
-      });
-    }
-
-    // Check if the Google email matches the user's email
-    if (email !== user.email) {
-      return res.status(400).json({
-        success: false,
-        message: 'Google account email does not match your account email'
-      });
-    }
-
-    // Link Google account
-    user.googleId = googleId;
-    user.avatar = avatar || user.avatar;
-    await user.save();
-
-    res.status(200).json({
-      success: true,
-      message: 'Google account linked successfully',
-      data: {
-        userId: user._id,
-        email: user.email,
-        fullName: user.fullName,
-        avatar: user.avatar,
-        hasGoogleAccount: true
-      }
-    });
-
-  } catch (error) {
-    console.error('Link Google account error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error'
-    });
-  }
-};
-
-// Add this function to unlink Google account
-const unlinkGoogleAccount = async (req, res) => {
-  try {
-    const userId = req.user.id; // From auth middleware
-
-    // Get current user
-    const user = await User.findById(userId).select('+password');
-    
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
-    }
-
-    // Check if user has a password (prevent unlinking if no password set)
-    if (!user.password) {
-      return res.status(400).json({
-        success: false,
-        message: 'Cannot unlink Google account. Please set a password first.'
-      });
-    }
-
-    // Check if Google account is linked
-    if (!user.googleId) {
-      return res.status(400).json({
-        success: false,
-        message: 'No Google account is linked to this user'
-      });
-    }
-
-    // Unlink Google account
-    user.googleId = undefined;
-    await user.save();
-
-    res.status(200).json({
-      success: true,
-      message: 'Google account unlinked successfully',
-      data: {
-        userId: user._id,
-        email: user.email,
-        fullName: user.fullName,
-        hasGoogleAccount: false
-      }
-    });
-
-  } catch (error) {
-    console.error('Unlink Google account error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error'
-    });
-  }
-};
-
 // Forgot Password
 const forgotPassword = async (req, res) => {
   try {
@@ -556,7 +406,7 @@ const forgotPassword = async (req, res) => {
 
     // Find user
     const user = await User.findOne({ email });
-    
+
     if (!user) {
       // Don't reveal if user exists or not for security
       return res.status(200).json({
@@ -565,10 +415,10 @@ const forgotPassword = async (req, res) => {
       });
     }
 
-
     // Generate OTP and reset token
     const otp = generateOTP();
     const resetToken = crypto.randomBytes(32).toString('hex');
+
     const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
     // Save reset token and OTP
@@ -576,35 +426,37 @@ const forgotPassword = async (req, res) => {
     user.passwordResetExpiry = otpExpiry;
     user.otp = otp;
     user.otpExpiry = otpExpiry;
-    
+
     await user.save();
+
+    console.log('Generated Reset Token:', resetToken); // Add this for debugging
 
     // Send OTP email
     try {
-      await sendPasswordResetEmail(email, otp, user.firstName);
+      await sendPasswordResetEmail(user.email, otp, user.firstName);
+
+      res.status(200).json({
+        success: true,
+        message: 'Password reset OTP sent to your email address.',
+        data: {
+          resetToken: resetToken // Send this to frontend for next step
+        }
+      });
     } catch (emailError) {
       console.error('Password reset email sending failed:', emailError);
-      
+
       // Clear reset fields if email fails
       user.passwordResetToken = undefined;
       user.passwordResetExpiry = undefined;
       user.otp = undefined;
       user.otpExpiry = undefined;
       await user.save();
-      
+
       return res.status(500).json({
         success: false,
         message: 'Failed to send password reset email. Please try again.'
       });
     }
-
-    res.status(200).json({
-      success: true,
-      message: 'Password reset OTP sent to your email address.',
-      data: {
-        resetToken: resetToken // Send this to frontend for next step
-      }
-    });
 
   } catch (error) {
     console.error('Forgot password error:', error);
@@ -614,6 +466,7 @@ const forgotPassword = async (req, res) => {
     });
   }
 };
+
 
 // Reset Password
 const resetPassword = async (req, res) => {
@@ -629,13 +482,17 @@ const resetPassword = async (req, res) => {
 
     const { resetToken, otp, newPassword } = req.body;
 
-    // Find user with reset token
+    console.log('Reset Token from request:', resetToken);
+
+    // FIXED: Explicitly select the hidden fields using +fieldName syntax
     const user = await User.findOne({
       passwordResetToken: resetToken,
       passwordResetExpiry: { $gt: Date.now() }
     }).select('+passwordResetToken +passwordResetExpiry +otp +otpExpiry');
 
-    console.log(user);
+    console.log('Found user:', user ? 'User found' : 'No user found');
+    console.log('DB Reset Token:', user?.passwordResetToken);
+    console.log('Request Reset Token:', resetToken);
 
     if (!user) {
       return res.status(400).json({
@@ -668,7 +525,7 @@ const resetPassword = async (req, res) => {
     user.otpExpiry = undefined;
     user.loginAttempts = 0;
     user.lockUntil = undefined;
-    
+
     await user.save();
 
     res.status(200).json({
@@ -698,11 +555,11 @@ const changePassword = async (req, res) => {
     }
 
     const { currentPassword, newPassword } = req.body;
-    const userId = req.user.id;
+    const userId = req.user.userId;
 
     // Find user and include password
     const user = await User.findById(userId).select('+password');
-    
+
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -720,7 +577,7 @@ const changePassword = async (req, res) => {
 
     // Verify current password
     const isCurrentPasswordCorrect = await user.comparePassword(currentPassword);
-    
+
     if (!isCurrentPasswordCorrect) {
       return res.status(400).json({
         success: false,
@@ -730,7 +587,7 @@ const changePassword = async (req, res) => {
 
     // Check if new password is different from current
     const isSamePassword = await user.comparePassword(newPassword);
-    
+
     if (isSamePassword) {
       return res.status(400).json({
         success: false,
@@ -806,12 +663,12 @@ const getProfile = async (req, res) => {
       avatar: user.avatar,
       role: user.role,
       isVerified: user.isVerified,
-     address: user.address,
+      address: user.address,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
       hasPassword: !!user.password,
       wishlist: user.wishlist || [],
-      
+
     };
 
     res.status(200).json({
@@ -832,10 +689,9 @@ const getProfile = async (req, res) => {
 module.exports = {
   register,
   verifyOTP,
+  resendOTP,
   login,
-  googleLogin,
-  linkGoogleAccount,
-  unlinkGoogleAccount,
+  googleCallback,
   forgotPassword,
   resetPassword,
   changePassword,

@@ -6,6 +6,11 @@ const orderSchema = new mongoose.Schema({
         ref: 'User',
         required: [true, 'User is required for order']
     },
+    orderNumber: {
+        type: String,
+        required: true,
+        unique: true
+    },
     products: [{
         product: {
             type: mongoose.Schema.Types.ObjectId,
@@ -23,6 +28,19 @@ const orderSchema = new mongoose.Schema({
             min: [0, 'Price cannot be negative']
         }
     }],
+    subtotal: {
+        type: Number,
+        required: true,
+        min: [0, 'Subtotal cannot be negative']
+    },
+    tax: {
+        type: Number,
+        default: 0
+    },
+    shipping: {
+        type: Number,
+        default: 0
+    },
     totalAmount: {
         type: Number,
         required: [true, 'Total amount is required'],
@@ -31,34 +49,32 @@ const orderSchema = new mongoose.Schema({
     billingAddress: {
         street: {
             type: String,
-            required: [true, 'Street address is required']
+            required: [true, 'Street address is required'],
+            minlength: [5, 'Street address must be at least 5 characters'],
+            maxlength: [200, 'Street address must be at most 200 characters']
         },
-        city: {
-            type: String,
-            required: [true, 'City is required']
-        },
-        state: {
-            type: String,
-            required: [true, 'State is required']
-        },
+        city: { type: String, required: [true, 'City is required'] },
+        state: { type: String, required: [true, 'State is required'] },
         zipCode: {
             type: String,
-            required: [true, 'Zip code is required']
+            required: [true, 'Zip code is required'],
+            match: [/^\d{6}$/, 'Zip code must be 6 digits']
         },
-        country: {
-            type: String,
-            required: [true, 'Country is required']
-        }
+        country: { type: String, required: [true, 'Country is required'] }
     },
     paymentMethod: {
         type: String,
-        required: [true, 'Payment method is required'],
         enum: ['razorpay', 'cod', 'upi', 'card'],
-        default: 'razorpay'
+        default: 'razorpay',
+        required: true
     },
     transactionId: {
         type: String,
-        required: [true, 'Transaction ID is required']
+        default: null // not required upfront; will be set later
+    },
+    razorpayOrderId: {
+        type: String,
+        default: null
     },
     paymentStatus: {
         type: String,
@@ -67,18 +83,17 @@ const orderSchema = new mongoose.Schema({
     },
     orderStatus: {
         type: String,
-        enum: ['pending', 'delivered', 'cancelled'],
+        enum: ['pending', 'confirmed', 'delivered', 'cancelled'],
         default: 'pending'
     }
 }, {
     timestamps: true
 });
 
-// Create indexes
+// Indexes
 orderSchema.index({ user: 1 });
 orderSchema.index({ orderStatus: 1 });
 orderSchema.index({ paymentStatus: 1 });
 orderSchema.index({ transactionId: 1 });
 
 module.exports = mongoose.model('Order', orderSchema);
-

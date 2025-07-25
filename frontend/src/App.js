@@ -1,71 +1,63 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
-import { SocketProvider } from './context/SocketContext';
+import { GlobalProvider } from './context/GlobalContext';
 import Layout from './components/layout/Layout';
-import Home from './pages/Home';
-import Products from './pages/Products';
-import ProductDetails from './pages/ProductDetails';
-import Cart from './pages/Cart';
-import Checkout from './pages/Checkout';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import Profile from './pages/Profile';
-import Orders from './pages/Orders';
-import AdminDashboard from './pages/admin/AdminDashboard';
-import ProtectedRoute from './components/common/ProtectedRoute';
-import './App.css';
+// import ProtectedRoute from './components/common/ProtectedRoute';
 
-const queryClient = new QueryClient();
+// User Pages
+import Home from './pages/Home';
+import Register from './pages/Register';
+import Login from './pages/Login';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import VerifyOTP from './pages/VerifyOTP';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
+import Dashboard from './pages/Dashboard';
+import GoogleAuthSuccess from './pages/GoogleAuthSuccess';
+// import ProductDetails from './pages/user/ProductDetails';
+// import Cart from './pages/user/Cart';
+// import Checkout from './pages/user/Checkout';
+// import Orders from './pages/user/Orders';
+// import Profile from './pages/user/Profile';
+// import Wishlist from './pages/user/Wishlist';
+
+// // Admin Pages
+// import AdminDashboard from './pages/admin/Dashboard';
+// import AdminProducts from './pages/admin/Products';
+// import AdminOrders from './pages/admin/Orders';
+// import AdminInventory from './pages/admin/Inventory';
+// import AdminCustomers from './pages/admin/Customers';
+
+// Styles
+import './styles/globals.css';
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <CartProvider>
-          <SocketProvider>
+    <div className="App">
+      <GlobalProvider>
+        <AuthProvider>
+          <CartProvider>
             <Router>
               <Layout>
                 <Routes>
                   <Route path="/" element={<Home />} />
-                  <Route path="/products" element={<Products />} />
-                  <Route path="/products/:id" element={<ProductDetails />} />
-                  <Route path="/cart" element={<Cart />} />
-                  <Route path="/login" element={<Login />} />
                   <Route path="/register" element={<Register />} />
-                  
-                  {/* Protected Routes */}
-                  <Route path="/checkout" element={
-                    <ProtectedRoute>
-                      <Checkout />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/profile" element={
-                    <ProtectedRoute>
-                      <Profile />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/orders" element={
-                    <ProtectedRoute>
-                      <Orders />
-                    </ProtectedRoute>
-                  } />
-                  
-                  {/* Admin Routes */}
-                  <Route path="/admin/*" element={
-                    <ProtectedRoute adminOnly>
-                      <AdminDashboard />
-                    </ProtectedRoute>
-                  } />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/admindashboard" element={<AdminDashboard />} />
+                  <Route path="/verify-otp" element={<VerifyOTP />} />
+                  <Route path="/forgot-password" element={<ForgotPassword />} />
+                  <Route path="/reset-password" element={<ResetPassword />} />
+                  <Route path="/auth/google/success" element={<GoogleAuthSuccess />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
                 </Routes>
               </Layout>
             </Router>
-          </SocketProvider>
-        </CartProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+          </CartProvider>
+        </AuthProvider>
+      </GlobalProvider>
+    </div>
   );
 }
 

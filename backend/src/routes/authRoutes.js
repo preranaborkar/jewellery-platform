@@ -2,13 +2,13 @@
 
 const express = require('express');
 const { body } = require('express-validator');
+const passport = require('passport');
 const { 
   register, 
   verifyOTP, 
+  resendOTP,
   login, 
-  googleLogin, 
-  linkGoogleAccount, 
-  unlinkGoogleAccount,
+  googleCallback,
   forgotPassword,
   resetPassword,
   changePassword,
@@ -62,6 +62,15 @@ router.post('/verify-otp', [
     .withMessage('OTP must contain only numbers')
 ], verifyOTP);
 
+
+// Resend OTP route
+router.post('/resend-otp', [
+  body('email')
+    .isEmail()
+    .normalizeEmail()
+    .withMessage('Please enter a valid email address')
+], resendOTP);
+
 // Login route
 router.post('/login', [
   body('email')
@@ -79,12 +88,7 @@ router.post('/login', [
     .withMessage('Remember me must be a boolean value')
 ], login);
 
-// Google OAuth login/signup
-router.post('/google-login', [
-  body('token')
-    .notEmpty()
-    .withMessage('Google token is required')
-], googleLogin);
+
 
 // Forgot Password
 router.post('/forgot-password', [
@@ -113,6 +117,8 @@ router.post('/reset-password', [
     .withMessage('Password must contain at least one uppercase letter, one lowercase letter, and one number')
 ], resetPassword);
 
+
+
 // Change Password (Protected)
 router.post('/change-password', authenticateToken, [
   body('currentPassword')
@@ -126,15 +132,16 @@ router.post('/change-password', authenticateToken, [
     .withMessage('New password must contain at least one uppercase letter, one lowercase letter, and one number')
 ], changePassword);
 
-// Link Google Account (Protected)
-router.post('/link-google', authenticateToken, [
-  body('token')
-    .notEmpty()
-    .withMessage('Google token is required')
-], linkGoogleAccount);
+// Start Google login
+router.get('/google', passport.authenticate('google', { 
+  scope: ['profile', 'email'] 
+}));
 
-// Unlink Google Account (Protected)
-router.post('/unlink-google', authenticateToken, unlinkGoogleAccount);
+// Google OAuth callback
+router.get('/google/callback', 
+  passport.authenticate('google', { session: false }),
+  googleCallback
+);
 
 // Logout
 router.post('/logout', logout);
