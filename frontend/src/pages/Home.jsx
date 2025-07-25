@@ -251,34 +251,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Call to Action */}
-      <section className="py-20 px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <Crown className="h-16 w-16 mx-auto text-[#A47551] mb-6" />
-          <h2 className="text-4xl md:text-5xl font-bold text-[#523A28] mb-6">
-            Ready to Find Your Perfect Piece?
-          </h2>
-          <p className="text-lg text-[#A47551] mb-8 max-w-2xl mx-auto">
-            Browse our complete collection of handcrafted jewelry and discover pieces that tell your unique story
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              to="/products"
-              className="inline-flex items-center space-x-2 bg-[#A47551] hover:bg-[#523A28] text-white px-8 py-4 rounded-full text-lg font-semibold transition-all duration-300 transform hover:scale-105 hover:shadow-xl"
-            >
-              <span>Shop All Collections</span>
-              <ArrowRight className="h-5 w-5" />
-            </Link>
-            <Link
-              to="/products?featured=true"
-              className="inline-flex items-center space-x-2 border-2 border-[#A47551] text-[#A47551] hover:bg-[#A47551] hover:text-white px-8 py-4 rounded-full text-lg font-semibold transition-all duration-300 transform hover:scale-105"
-            >
-              <Star className="h-5 w-5" />
-              <span>Featured Items</span>
-            </Link>
-          </div>
-        </div>
-      </section>
+     
     </div>
   );
 };
