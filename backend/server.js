@@ -145,7 +145,7 @@ app.use((err, req, res, next) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/categories', categoryRoutes);
-app.use('/api/admin', adminProductRoutes); 
+app.use('/api/admin/products', adminProductRoutes); 
 app.use('/api/cart', cartRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 // app.use('/api/orders', orderRoutes);

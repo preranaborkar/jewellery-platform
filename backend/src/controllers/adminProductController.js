@@ -5,95 +5,6 @@ const { uploadToCloudinary, deleteFromCloudinary } = require('../utils/cloudinar
 const csv = require('csv-parser');
 const fs = require('fs');
 
-// Create new product
-const createProduct = async (req, res) => {
-    try {
-        const {
-            name,
-            description,
-            shortDescription,
-            price,
-            category,
-            metalType,
-            metalPurity,
-            stock
-        } = req.body;
-
-        // Check if category exists
-        const categoryExists = await Category.findById(category);
-        if (!categoryExists) {
-            return res.status(400).json({
-                success: false,
-                message: 'Invalid category ID'
-            });
-        }
-
-
-
-        // Handle image uploads
-        let imageUrls = [];
-
-        if (req.body.image && Array.isArray(req.body.image)) {
-            imageUrls = req.body.image;
-        }
-        if (req.files && req.files.length > 0) {
-            for (const file of req.files) {
-                try {
-                    const result = await uploadToCloudinary(file.buffer, {
-                        folder: 'jewelry-products',
-                        transformation: [
-                            { width: 800, height: 800, crop: 'fill' },
-                            { quality: 'auto', fetch_format: 'auto' }
-                        ]
-                    });
-                    imageUrls.push(result.secure_url);
-                } catch (uploadError) {
-                    console.error('Image upload error:', uploadError);
-                    return res.status(400).json({
-                        success: false,
-                        message: 'Error uploading images'
-                    });
-                }
-            }
-        }
-
-        if (imageUrls.length === 0) {
-            return res.status(400).json({
-                success: false,
-                message: 'At least one product image is required'
-            });
-        }
-
-        // Create product
-        const product = new Product({
-            name,
-            description,
-            shortDescription,
-            price: parseFloat(price),
-            category,
-            metalType: metalType.toLowerCase(),
-            metalPurity,
-            stock: parseInt(stock),
-            image: imageUrls
-        });
-
-        await product.save();
-        await product.populate('category', 'name');
-
-        res.status(201).json({
-            success: true,
-            message: 'Product created successfully',
-            data: product
-        });
-    } catch (error) {
-        console.error('Create product error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error creating product',
-            error: error.message
-        });
-    }
-};
 
 // Get all products for admin (with detailed info)
 const getAllAdminProducts = async (req, res) => {
@@ -176,14 +87,126 @@ const getAllAdminProducts = async (req, res) => {
     }
 };
 
+// Create new product
+const createProduct = async (req, res) => {
+    try {
+        const {
+            name,
+            description,
+            shortDescription,
+            price,
+            category,
+            metalType,
+            metalPurity,
+            stock
+        } = req.body;
+
+        // Validation
+        if (!name || !description || !shortDescription || !price || !category || !metalType || !metalPurity || !stock) {
+            return res.status(400).json({
+                success: false,
+                message: 'All fields are required'
+            });
+        }
+
+        // Check if category exists
+        const categoryExists = await Category.findById(category);
+        if (!categoryExists) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid category ID'
+            });
+        }
+
+        // Handle image uploads from files
+        let imageUrls = [];
+
+        if (!req.files || req.files.length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'At least one product image is required'
+            });
+        }
+
+        // Upload each file to Cloudinary
+        try {
+            for (const file of req.files) {
+                const result = await uploadToCloudinary(file.buffer, {
+                    folder: 'jewelry-products',
+                    transformation: [
+                        { width: 800, height: 800, crop: 'fill' },
+                        { quality: 'auto', fetch_format: 'auto' }
+                    ]
+                });
+                imageUrls.push(result.secure_url);
+            }
+        } catch (uploadError) {
+            console.error('Image upload error:', uploadError);
+            return res.status(400).json({
+                success: false,
+                message: 'Error uploading images'
+            });
+        }
+
+        // Create product
+        const product = new Product({
+            name: name.trim(),
+            description: description.trim(),
+            shortDescription: shortDescription.trim(),
+            price: parseFloat(price),
+            category,
+            metalType: metalType.toLowerCase(),
+            metalPurity: metalPurity.trim(),
+            stock: parseInt(stock),
+            image: imageUrls
+        });
+
+        await product.save();
+        await product.populate('category', 'name');
+
+        res.status(201).json({
+            success: true,
+            message: 'Product created successfully',
+            data: product
+        });
+    } catch (error) {
+        console.error('Create product error:', error);
+        
+        // Handle validation errors
+        if (error.name === 'ValidationError') {
+            const errors = Object.values(error.errors).map(err => err.message);
+            return res.status(400).json({
+                success: false,
+                message: 'Validation error',
+                errors
+            });
+        }
+
+        res.status(500).json({
+            success: false,
+            message: 'Error creating product',
+            error: error.message
+        });
+    }
+};
+
 // Update product
 const updateProduct = async (req, res) => {
     try {
-        const productId = req.params.id;
-        const updateData = { ...req.body };
+        const { id } = req.params;
+        const {
+            name,
+            description,
+            shortDescription,
+            price,
+            category,
+            metalType,
+            metalPurity,
+            stock
+        } = req.body;
 
-        // Check if product exists
-        const existingProduct = await Product.findById(productId);
+        // Find existing product
+        const existingProduct = await Product.findById(id);
         if (!existingProduct) {
             return res.status(404).json({
                 success: false,
@@ -191,9 +214,9 @@ const updateProduct = async (req, res) => {
             });
         }
 
-        // Validate category if provided
-        if (updateData.category) {
-            const categoryExists = await Category.findById(updateData.category);
+        // Check if category exists (if provided)
+        if (category) {
+            const categoryExists = await Category.findById(category);
             if (!categoryExists) {
                 return res.status(400).json({
                     success: false,
@@ -202,22 +225,14 @@ const updateProduct = async (req, res) => {
             }
         }
 
-        // Handle image updates
-        if (req.files && req.files.length > 0) {
-            // Delete old images from Cloudinary
-            for (const imageUrl of existingProduct.image) {
-                try {
-                    const publicId = imageUrl.split('/').pop().split('.')[0];
-                    await deleteFromCloudinary(`jewelry-products/${publicId}`);
-                } catch (deleteError) {
-                    console.log('Error deleting old image:', deleteError);
-                }
-            }
+        // Handle image uploads if new files are provided
+        let imageUrls = existingProduct.image; // Keep existing images by default
 
+        if (req.files && req.files.length > 0) {
             // Upload new images
-            let newImageUrls = [];
-            for (const file of req.files) {
-                try {
+            const newImageUrls = [];
+            try {
+                for (const file of req.files) {
                     const result = await uploadToCloudinary(file.buffer, {
                         folder: 'jewelry-products',
                         transformation: [
@@ -226,36 +241,53 @@ const updateProduct = async (req, res) => {
                         ]
                     });
                     newImageUrls.push(result.secure_url);
-                } catch (uploadError) {
-                    console.error('Image upload error:', uploadError);
-                    return res.status(400).json({
-                        success: false,
-                        message: 'Error uploading new images'
-                    });
                 }
+                imageUrls = newImageUrls; // Replace with new images
+            } catch (uploadError) {
+                console.error('Image upload error:', uploadError);
+                return res.status(400).json({
+                    success: false,
+                    message: 'Error uploading images'
+                });
             }
-            updateData.image = newImageUrls;
         }
 
-        // Convert data types
-        if (updateData.price) updateData.price = parseFloat(updateData.price);
-        if (updateData.stock !== undefined) updateData.stock = parseInt(updateData.stock);
-        if (updateData.metalType) updateData.metalType = updateData.metalType.toLowerCase();
-
         // Update product
-        const updatedProduct = await Product.findByIdAndUpdate(
-            productId,
+        const updateData = {
+            ...(name && { name: name.trim() }),
+            ...(description && { description: description.trim() }),
+            ...(shortDescription && { shortDescription: shortDescription.trim() }),
+            ...(price && { price: parseFloat(price) }),
+            ...(category && { category }),
+            ...(metalType && { metalType: metalType.toLowerCase() }),
+            ...(metalPurity && { metalPurity: metalPurity.trim() }),
+            ...(stock !== undefined && { stock: parseInt(stock) }),
+            image: imageUrls
+        };
+
+        const product = await Product.findByIdAndUpdate(
+            id,
             updateData,
             { new: true, runValidators: true }
         ).populate('category', 'name');
 
-        res.status(200).json({
+        res.json({
             success: true,
             message: 'Product updated successfully',
-            data: updatedProduct
+            data: product
         });
     } catch (error) {
         console.error('Update product error:', error);
+        
+        if (error.name === 'ValidationError') {
+            const errors = Object.values(error.errors).map(err => err.message);
+            return res.status(400).json({
+                success: false,
+                message: 'Validation error',
+                errors
+            });
+        }
+
         res.status(500).json({
             success: false,
             message: 'Error updating product',
@@ -263,7 +295,6 @@ const updateProduct = async (req, res) => {
         });
     }
 };
-
 // Delete product
 const deleteProduct = async (req, res) => {
     try {

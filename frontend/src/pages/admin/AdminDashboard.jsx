@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { BarChart3, Users, Package, Calendar, FileText, TrendingUp, ShoppingCart, DollarSign, Eye, Plus } from 'lucide-react';
+
+import {  Users, Package,  FileText,  ShoppingCart, DollarSign, Eye, Plus } from 'lucide-react';
 
 const AdminDashboard = () => {
   const statsCards = [
@@ -28,11 +28,7 @@ const AdminDashboard = () => {
       {/* Main Content */}
       <main className="p-6">
         <div className="max-w-7xl mx-auto">
-          {/* Page Title */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-[#523A28] mb-2">Dashboard</h1>
-            <p className="text-[#523A28]/80">Welcome back! Here's what's happening with your store today.</p>
-          </div>
+          
 
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -131,9 +127,13 @@ const AdminDashboard = () => {
           <div className="mt-8 bg-white rounded-xl p-6 shadow-lg border border-[#D0B49F]/20">
             <h2 className="text-xl font-bold text-[#523A28] mb-4">Quick Actions</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <button className="flex flex-col items-center p-4 bg-gradient-to-br from-[#A47551] to-[#523A28] text-white rounded-lg hover:shadow-lg transition-all duration-200 hover:scale-105">
+              <button  className="flex flex-col items-center p-4 bg-gradient-to-br from-[#A47551] to-[#523A28] text-white rounded-lg hover:shadow-lg transition-all duration-200 hover:scale-105">
                 <Package size={24} className="mb-2" />
                 <span className="text-sm font-medium">Add Product</span>
+              </button>
+               <button className="flex flex-col items-center p-4 bg-gradient-to-br from-[#523A28] to-[#A47551] text-white rounded-lg hover:shadow-lg transition-all duration-200 hover:scale-105">
+                <Package size={24} className="mb-2" />
+                <span className="text-sm font-medium">Add Categories</span>
               </button>
               <button className="flex flex-col items-center p-4 bg-gradient-to-br from-[#D0B49F] to-[#A47551] text-white rounded-lg hover:shadow-lg transition-all duration-200 hover:scale-105">
                 <Users size={24} className="mb-2" />
@@ -143,10 +143,7 @@ const AdminDashboard = () => {
                 <FileText size={24} className="mb-2" />
                 <span className="text-sm font-medium">View Reports</span>
               </button>
-              <button className="flex flex-col items-center p-4 bg-gradient-to-br from-[#523A28] to-[#A47551] text-white rounded-lg hover:shadow-lg transition-all duration-200 hover:scale-105">
-                <TrendingUp size={24} className="mb-2" />
-                <span className="text-sm font-medium">Analytics</span>
-              </button>
+             
             </div>
           </div>
         </div>
