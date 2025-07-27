@@ -8,7 +8,7 @@ const {
     updateProduct,
     deleteProduct,
     getInventory,
-    bulkUploadProducts
+    getProductById
 } = require('../controllers/adminProductController');
 
 const { uploadProductImages, handleMulterError } = require('../middleware/upload');
@@ -42,7 +42,7 @@ router.put('/:id',
 
 router.get('/', getAllAdminProducts);
 router.delete('/:id', deleteProduct);
-
+router.get('/:id', getProductById);
 
 router.get('/inventory', getInventory);
 

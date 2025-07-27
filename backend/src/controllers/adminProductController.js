@@ -4,9 +4,44 @@ const Category = require('../models/Category');
 const { uploadToCloudinary, deleteFromCloudinary } = require('../utils/cloudinary');
 const csv = require('csv-parser');
 const fs = require('fs');
+const mongoose = require('mongoose');
+
+const getProductById = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const product = await Product.findById(id).populate('category', 'name').lean();
+        if (!product) {
+            return res.status(404).json({
+                success: false,
+                message: 'Product not found'
+            });
+        }
+
+        // Add stock status
+        const stockStatus = product.stock <= 0 
+            ? 'outOfStock' 
+            : product.stock <= 10 
+                ? 'lowStock' 
+                : 'inStock';
+
+        res.status(200).json({
+            success: true,
+            data: { ...product, stockStatus }
+        });
+    } catch (error) {
+        console.error('Get product by ID error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching product',
+            error: error.message
+        });
+    }
+};
 
 
-// Get all products for admin (with detailed info)
+
+// In your backend product controller
 const getAllAdminProducts = async (req, res) => {
     try {
         const {
@@ -16,40 +51,63 @@ const getAllAdminProducts = async (req, res) => {
             category,
             metalType,
             stockStatus,
-            search
+            search,
+            minPrice,
+            maxPrice
         } = req.query;
 
-        // Build filter
-        const filter = {};
+        console.log('Query parameters:', req.query);
 
-        if (category) {
+        // Build filter object
+        let filter = {};
+
+        // Category filter (only add if it's a valid ObjectId)
+        if (category && mongoose.Types.ObjectId.isValid(category)) {
             filter.category = category;
         }
 
+        // Metal type filter
         if (metalType) {
-            filter.metalType = metalType.toLowerCase();
+            filter.metalType = metalType;
         }
 
-        if (stockStatus === 'inStock') {
-            filter.stock = { $gt: 0 };
-        } else if (stockStatus === 'outOfStock') {
-            filter.stock = { $lte: 0 };
-        } else if (stockStatus === 'lowStock') {
-            filter.stock = { $lte: 10, $gt: 0 };
+        // Stock status filter
+        if (stockStatus) {
+            switch (stockStatus) {
+                case 'out-of-stock':
+                    filter.stock = 0;
+                    break;
+                case 'low-stock':
+                    filter.stock = { $gt: 0, $lt: 10 };
+                    break;
+                case 'in-stock':
+                    filter.stock = { $gte: 10 };
+                    break;
+            }
         }
 
-        if (search) {
+        // Price range filter
+        if (minPrice || maxPrice) {
+            filter.price = {};
+            if (minPrice) filter.price.$gte = parseFloat(minPrice);
+            if (maxPrice) filter.price.$lte = parseFloat(maxPrice);
+        }
+
+        // Search filter
+        if (search && search.trim()) {
             filter.$or = [
-                { name: { $regex: search, $options: 'i' } },
-                { description: { $regex: search, $options: 'i' } },
-                { metalType: { $regex: search, $options: 'i' } }
+                { name: { $regex: search.trim(), $options: 'i' } },
+                { description: { $regex: search.trim(), $options: 'i' } },
+                { shortDescription: { $regex: search.trim(), $options: 'i' } }
             ];
         }
 
-        const skip = (page - 1) * limit;
-        const totalProducts = await Product.countDocuments(filter);
-        const totalPages = Math.ceil(totalProducts / limit);
+        console.log('Filter:', filter);
 
+        // Calculate pagination
+        const skip = (parseInt(page) - 1) * parseInt(limit);
+
+        // Execute query with population
         const products = await Product.find(filter)
             .populate('category', 'name')
             .sort(sort)
@@ -57,26 +115,22 @@ const getAllAdminProducts = async (req, res) => {
             .limit(parseInt(limit))
             .lean();
 
-        // Add stock status to each product
-        const productsWithStatus = products.map(product => ({
-            ...product,
-            stockStatus: product.stock <= 0 ? 'outOfStock' :
-                product.stock <= 10 ? 'lowStock' : 'inStock'
-        }));
+        // Get total count for pagination
+        const totalProducts = await Product.countDocuments(filter);
+        const totalPages = Math.ceil(totalProducts / parseInt(limit));
 
         res.status(200).json({
             success: true,
             data: {
-                products: productsWithStatus,
-                pagination: {
-                    currentPage: parseInt(page),
-                    totalPages,
-                    totalProducts,
-                    hasNextPage: page < totalPages,
-                    hasPrevPage: page > 1
-                }
+                products,
+                currentPage: parseInt(page),
+                totalPages,
+                totalProducts,
+                hasNextPage: parseInt(page) < totalPages,
+                hasPrevPage: parseInt(page) > 1
             }
         });
+
     } catch (error) {
         console.error('Get admin products error:', error);
         res.status(500).json({
@@ -86,7 +140,6 @@ const getAllAdminProducts = async (req, res) => {
         });
     }
 };
-
 // Create new product
 const createProduct = async (req, res) => {
     try {
@@ -582,5 +635,6 @@ module.exports = {
     updateProduct,
     deleteProduct,
     getInventory,
-    bulkUploadProducts
+    bulkUploadProducts,
+    getProductById
 };

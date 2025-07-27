@@ -19,8 +19,8 @@ const categoryRoutes = require('./src/routes/categoryRoutes');
 const adminProductRoutes = require('./src/routes/adminProductRoutes');
 const cartRoutes = require('./src/routes/cartRoutes');
 const wishlistRoutes= require('./src/routes/wishlistRoutes');
-// const adminOrderRoutes = require('./src/routes/adminOrderRoutes');
-// const orderRoutes = require('./src/routes/orderRoutes');
+
+const orderRoutes = require('./src/routes/orderRoutes');
 // const userRoutes = require('./src/routes/userRoutes');
 // const reviewRoutes = require('./src/routes/reviewRoutes');
 
@@ -148,8 +148,8 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/admin/products', adminProductRoutes); 
 app.use('/api/cart', cartRoutes);
 app.use('/api/wishlist', wishlistRoutes);
-// app.use('/api/orders', orderRoutes);
-// app.use('/api/admin/orders', adminOrderRoutes);
+app.use('/api/orders', orderRoutes);
+
 
 // app.use('/api/users', userRoutes);
 // app.use('/api/reviews', reviewRoutes);
