@@ -126,9 +126,14 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem('resetEmail');
     };
 
+    const isAdmin = () => {
+        return isAuthenticated && user?.role === 'admin';
+    };
+
     const value = {
         user,
         isAuthenticated,
+        isAdmin,
         registrationData,
         resetToken,
         login,

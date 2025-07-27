@@ -18,9 +18,12 @@ import ResetPassword from './pages/ResetPassword';
 import Dashboard from './pages/Dashboard';
 import GoogleAuthSuccess from './pages/GoogleAuthSuccess';
 import CreateProductPage from './pages/admin/CreateProduct';
-
+import ViewProductPage from './pages/admin/ViewAllProducts';
+import UpdateProductPage from './pages/admin/UpdateProductPage';
+import Orders from './pages/admin/Orders';
 // Styles
 import './styles/globals.css';
+import { View } from 'lucide-react';
 
 function App() {
   return (
@@ -42,6 +45,9 @@ function App() {
                     <Route path="/auth/google/success" element={<GoogleAuthSuccess />} />
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/create-product" element={<CreateProductPage/>}/>
+                    <Route path="/view-all-products" element={<ViewProductPage/>}/>
+                    <Route path="/edit-product/:productId" element={<UpdateProductPage />} />
+                    <Route path="/get-orders" element={<Orders/>}></Route>
                   </Routes>
                 </Layout>
               </Router>

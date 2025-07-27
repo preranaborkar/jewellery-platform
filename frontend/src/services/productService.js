@@ -198,6 +198,7 @@ class ProductService {
     }
   }
 
+
   // Get inventory data
   async getInventory() {
     try {
@@ -315,6 +316,7 @@ class ProductService {
         };
       }
 
+      console.log('Admin products response:', data.data);
       return {
         success: true,
         data: data.data
@@ -332,7 +334,153 @@ class ProductService {
   }
 
 
+  // Get single product by ID
+async getProductById(productId) {
+  try {
+    const response = await fetch(`/api/admin/products/${productId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        ...this.getAuthHeaders()
+      }
+    });
 
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw {
+        status: response.status,
+        data: data
+      };
+    }
+
+    return {
+      success: true,
+      data: data.data
+    };
+  } catch (error) {
+    if (error.status) {
+      throw error;
+    } else {
+      throw {
+        status: 0,
+        data: { message: 'Network error. Please try again.' }
+      };
+    }
+  }
+}
+
+// Toggle product status (active/inactive)
+async toggleProductStatus(productId, status) {
+  try {
+    const response = await fetch(`/api/admin/products/${productId}/status`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        ...this.getAuthHeaders()
+      },
+      body: JSON.stringify({ status })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw {
+        status: response.status,
+        data: data
+      };
+    }
+
+    return {
+      success: true,
+      data: data.data
+    };
+  } catch (error) {
+    if (error.status) {
+      throw error;
+    } else {
+      throw {
+        status: 0,
+        data: { message: 'Network error. Please try again.' }
+      };
+    }
+  }
+}
+
+
+// Update product stock
+async updateStock(productId, stock) {
+  try {
+    const response = await fetch(`/api/admin/products/${productId}/stock`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        ...this.getAuthHeaders()
+      },
+      body: JSON.stringify({ stock })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw {
+        status: response.status,
+        data: data
+      };
+    }
+
+    return {
+      success: true,
+      data: data.data
+    };
+  } catch (error) {
+    if (error.status) {
+      throw error;
+    } else {
+      throw {
+        status: 0,
+        data: { message: 'Network error. Please try again.' }
+      };
+    }
+  }
+}
+
+// Get product analytics/stats
+async getProductStats() {
+  try {
+    const response = await fetch('/api/admin/products/stats', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        ...this.getAuthHeaders()
+      }
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw {
+        status: response.status,
+        data: data
+      };
+    }
+
+    return {
+      success: true,
+      data: data.data
+    };
+  } catch (error) {
+    if (error.status) {
+      throw error;
+    } else {
+      throw {
+        status: 0,
+        data: { message: 'Network error. Please try again.' }
+      };
+    }
+  }
+
+}
 }
 
 export default new ProductService();

@@ -1,5 +1,5 @@
 // jewelry-ecommerce/frontend/src/hooks/useProduct.js
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProductContext } from '../context/ProductContext';
 
@@ -49,7 +49,7 @@ export const useProductForm = (initialData = null) => {
             ...prev,
             [field]: value
         }));
-        
+
         setIsDirty(true);
 
         // Clear field error when user starts typing
@@ -67,7 +67,7 @@ export const useProductForm = (initialData = null) => {
             ...prev,
             images
         }));
-        
+
         setIsDirty(true);
 
         // Clear images error
@@ -271,7 +271,7 @@ export const useImageUpload = () => {
                 URL.revokeObjectURL(img.url);
             }
         });
-        
+
         setPreviewImages([]);
         setUploadErrors([]);
     };
@@ -296,21 +296,115 @@ export const useImageUpload = () => {
     };
 };
 
-// Product list hook (for admin dashboard)
+// Debounce function
+const debounce = (func, delay) => {
+    let timeoutId;
+    return (...args) => {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => func.apply(null, args), delay);
+    };
+};
+
+// Product filters hook
+export const useProductFilters = () => {
+    const { loadProducts, filters: contextFilters, updateFilters } = useProductContext();
+
+    const [localFilters, setLocalFilters] = useState({
+        category: '',
+        metalType: '',
+        minPrice: '',
+        maxPrice: '',
+        stockStatus: '',
+        search: ''
+    });
+
+    const [searchTerm, setSearchTerm] = useState('');
+    const [sortBy, setSortBy] = useState('createdAt');
+    const [sortOrder, setSortOrder] = useState('desc');
+
+    // Debounced search function
+    const debouncedSearch = useMemo(
+        () => debounce((term) => {
+            const newFilters = { ...localFilters, search: term };
+            updateFilters(newFilters);
+            loadProducts(1, 10, newFilters);
+        }, 500),
+        [localFilters, updateFilters, loadProducts]
+    );
+
+    // Handle search input change
+    const handleSearchChange = (value) => {
+        setSearchTerm(value);
+        debouncedSearch(value);
+    };
+
+    // Handle filter change
+    const handleFilterChange = (key, value) => {
+        const newFilters = { ...localFilters, [key]: value };
+        setLocalFilters(newFilters);
+        updateFilters(newFilters);
+        loadProducts(1, 10, newFilters);
+    };
+
+    // Clear all filters
+    const clearAllFilters = () => {
+        const emptyFilters = {
+            category: '',
+            metalType: '',
+            minPrice: '',
+            maxPrice: '',
+            stockStatus: '',
+            search: ''
+        };
+        setLocalFilters(emptyFilters);
+        setSearchTerm('');
+        updateFilters(emptyFilters);
+        loadProducts(1, 10, emptyFilters);
+    };
+
+    // Handle sorting
+    const handleSort = (field) => {
+        const newOrder = sortBy === field && sortOrder === 'asc' ? 'desc' : 'asc';
+        setSortBy(field);
+        setSortOrder(newOrder);
+
+        const sortFilters = { ...localFilters, sortBy: field, sortOrder: newOrder };
+        loadProducts(1, 10, sortFilters);
+    };
+
+    // Check if any filters are active
+    const hasActiveFilters = useMemo(() => {
+        return Object.values(localFilters).some(value => value !== '');
+    }, [localFilters]);
+
+    return {
+        localFilters,
+        searchTerm,
+        sortBy,
+        sortOrder,
+        hasActiveFilters,
+        handleSearchChange,
+        handleFilterChange,
+        clearAllFilters,
+        handleSort
+    };
+};
+
+// Updated useProductList hook
 export const useProductList = () => {
-    const { 
-        products, 
-        loading, 
-        error, 
-        currentPage, 
-        totalPages, 
-        totalProducts,
-        loadProducts,
-        deleteProduct,
-        searchProducts,
-        filterProducts,
-        clearError 
-    } = useProductContext();
+     const {
+    products,
+    loading,
+    error,
+    categories,
+    metalTypes,
+    currentPage,
+    totalPages,
+    totalProducts,
+    loadProducts,
+    deleteProduct,
+    clearError
+  } = useProductContext();
 
     const [selectedProducts, setSelectedProducts] = useState([]);
     const [sortBy, setSortBy] = useState('createdAt');
@@ -318,15 +412,15 @@ export const useProductList = () => {
 
     const navigate = useNavigate();
 
-    // Load products on mount
+    // Load products on mount with no filters initially
     useEffect(() => {
-        loadProducts();
+        loadProducts(1, 10, {});
     }, []);
 
     // Handle product selection
     const toggleProductSelection = (productId) => {
-        setSelectedProducts(prev => 
-            prev.includes(productId) 
+        setSelectedProducts(prev =>
+            prev.includes(productId)
                 ? prev.filter(id => id !== productId)
                 : [...prev, productId]
         );
@@ -347,20 +441,40 @@ export const useProductList = () => {
         const newOrder = sortBy === field && sortOrder === 'asc' ? 'desc' : 'asc';
         setSortBy(field);
         setSortOrder(newOrder);
-        
-        // Apply sorting to current products
-        // Note: Ideally this should be handled by the backend
-        // For now, we'll sort on frontend
+
+        loadProducts(currentPage, 10, { sortBy: field, sortOrder: newOrder });
     };
 
-    // Navigate to edit product
     const editProduct = (productId) => {
-        navigate(`/admin/products/edit/${productId}`);
+        console.log(`Editing product with ID: ${productId}`);
+        navigate(`/edit-product/${productId}`);
     };
 
     // Navigate to create product
     const createNewProduct = () => {
         navigate('/create-product');
+    };
+
+    // Bulk delete products
+    const bulkDeleteProducts = async (productIds) => {
+        try {
+            const promises = productIds.map(id => deleteProduct(id));
+            await Promise.all(promises);
+            setSelectedProducts([]);
+            return { success: true };
+        } catch (error) {
+            throw error;
+        }
+    };
+
+    // Add search and filter methods that work with the component
+    const searchProducts = (searchTerm, currentFilters = {}) => {
+        const filters = { ...currentFilters, search: searchTerm };
+        return loadProducts(1, 10, filters);
+    };
+
+    const filterProducts = (filterData) => {
+        return loadProducts(1, 10, filterData);
     };
 
     return {
@@ -370,11 +484,14 @@ export const useProductList = () => {
         currentPage,
         totalPages,
         totalProducts,
+        categories,
+        metalTypes,
         selectedProducts,
         sortBy,
         sortOrder,
         loadProducts,
         deleteProduct,
+        bulkDeleteProducts,
         searchProducts,
         filterProducts,
         clearError,

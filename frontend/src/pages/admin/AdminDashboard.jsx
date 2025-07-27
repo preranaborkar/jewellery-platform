@@ -1,5 +1,6 @@
 
 import {  Users, Package,  FileText,  ShoppingCart, DollarSign, Eye, Plus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const AdminDashboard = () => {
   const statsCards = [
@@ -23,6 +24,7 @@ const AdminDashboard = () => {
     { name: 'Handcrafted Mugs', sales: 189, revenue: '₹28,350' }
   ];
 
+  const navigate = useNavigate();
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#E4D4C8] to-[#D0B49F]">
       {/* Main Content */}
@@ -127,13 +129,14 @@ const AdminDashboard = () => {
           <div className="mt-8 bg-white rounded-xl p-6 shadow-lg border border-[#D0B49F]/20">
             <h2 className="text-xl font-bold text-[#523A28] mb-4">Quick Actions</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <button  className="flex flex-col items-center p-4 bg-gradient-to-br from-[#A47551] to-[#523A28] text-white rounded-lg hover:shadow-lg transition-all duration-200 hover:scale-105">
+              
+              <button onClick={() => navigate("/view-all-products")}  className="flex flex-col items-center p-4 bg-gradient-to-br from-[#D0B49F] to-[#A47551] text-white rounded-lg hover:shadow-lg transition-all duration-200 hover:scale-105">
                 <Package size={24} className="mb-2" />
-                <span className="text-sm font-medium">Add Product</span>
+                <span className="text-sm font-medium">Manage Products</span>
               </button>
-               <button className="flex flex-col items-center p-4 bg-gradient-to-br from-[#523A28] to-[#A47551] text-white rounded-lg hover:shadow-lg transition-all duration-200 hover:scale-105">
+               <button onClick={()=>navigate("/get-orders")} className="flex flex-col items-center p-4 bg-gradient-to-br from-[#523A28] to-[#A47551] text-white rounded-lg hover:shadow-lg transition-all duration-200 hover:scale-105">
                 <Package size={24} className="mb-2" />
-                <span className="text-sm font-medium">Add Categories</span>
+                <span className="text-sm font-medium">Manage Orders</span>
               </button>
               <button className="flex flex-col items-center p-4 bg-gradient-to-br from-[#D0B49F] to-[#A47551] text-white rounded-lg hover:shadow-lg transition-all duration-200 hover:scale-105">
                 <Users size={24} className="mb-2" />
