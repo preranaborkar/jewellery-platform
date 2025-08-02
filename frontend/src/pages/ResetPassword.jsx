@@ -50,9 +50,6 @@ const ResetPassword = () => {
         <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-[#E4D4C8] to-[#D0B49F] p-4">
             <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md border border-[#D0B49F]/20">
                 <div className="text-center mb-6">
-                    <div className="w-16 h-16 bg-gradient-to-r from-[#A47551] to-[#523A28] rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Shield className="h-8 w-8 text-white" />
-                    </div>
                     <h2 className="text-2xl font-bold text-[#523A28] mb-2">Reset Password</h2>
                     <p className="text-[#A47551] text-sm">Enter the OTP from your email and your new password</p>
                 </div>
@@ -128,16 +125,7 @@ const ResetPassword = () => {
                         </div>
                     </div>
 
-                    {/* Password Requirements */}
-                    <div className="bg-[#E4D4C8]/30 p-3 rounded-lg">
-                        <p className="text-xs text-[#A47551] font-medium mb-1">Password must contain:</p>
-                        <ul className="text-xs text-[#A47551] space-y-1">
-                            <li>• At least 6 characters</li>
-                            <li>• One uppercase letter</li>
-                            <li>• One lowercase letter</li>
-                            <li>• One number</li>
-                        </ul>
-                    </div>
+                   
 
                     {/* Error Message */}
                     {error && (
@@ -174,15 +162,7 @@ const ResetPassword = () => {
                     </button>
                 </div>
 
-                {/* Help Text */}
-                <div className="mt-6 p-4 bg-[#E4D4C8]/30 rounded-lg">
-                    <p className="text-xs text-[#A47551] text-center">
-                        If you need assistance, please contact our support team at{' '}
-                        <a href="mailto:support@example.com" className="text-[#523A28] hover:underline">
-                            support@example.com
-                        </a>.
-                    </p>
-                </div>
+                
             </div>
         </div>
     );

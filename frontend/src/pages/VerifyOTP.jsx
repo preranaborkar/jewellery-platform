@@ -68,9 +68,7 @@ const VerifyOTP = () => {
             <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md border border-[#D0B49F]/20">
                 {/* Header */}
                 <div className="text-center mb-6">
-                    <div className="w-16 h-16 bg-gradient-to-r from-[#A47551] to-[#523A28] rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Mail className="h-8 w-8 text-white" />
-                    </div>
+                    
                     <h2 className="text-2xl font-bold text-[#523A28] mb-2">Verify Your Email</h2>
                     <p className="text-[#A47551] text-sm">
                         We've sent a 6-digit verification code to
@@ -102,9 +100,7 @@ const VerifyOTP = () => {
                                 />
                             ))}
                         </div>
-                        <p className="text-xs text-[#A47551] text-center mt-2">
-                            Enter the 6-digit code sent to your email
-                        </p>
+                       
                     </div>
 
                     {/* Error Message */}
@@ -165,12 +161,7 @@ const VerifyOTP = () => {
                     </button>
                 </div>
 
-                {/* Help Text */}
-                <div className="mt-6 p-4 bg-[#E4D4C8]/30 rounded-lg">
-                    <p className="text-xs text-[#A47551] text-center">
-                        Having trouble? Check your spam folder or contact support if you don't receive the verification code within a few minutes.
-                    </p>
-                </div>
+                
             </div>
         </div>
     );

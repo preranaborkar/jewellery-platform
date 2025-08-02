@@ -1,15 +1,11 @@
 const express = require('express');
 const cors = require('cors');
-const morgan = require('morgan');
-const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
+const helmet = require('helmet');//for security
 const { createServer } = require('http');
 const { Server } = require('socket.io');
 const cookieParser = require('cookie-parser');
 require('dotenv').config();
 const passport = require('./src/config/passport');
-
-// Import database connection
 const connectDB = require('./src/config/database');
 
 // Import routes
@@ -19,7 +15,6 @@ const categoryRoutes = require('./src/routes/categoryRoutes');
 const adminProductRoutes = require('./src/routes/adminProductRoutes');
 const cartRoutes = require('./src/routes/cartRoutes');
 const wishlistRoutes= require('./src/routes/wishlistRoutes');
-
 const orderRoutes = require('./src/routes/orderRoutes');
 // const userRoutes = require('./src/routes/userRoutes');
 // const reviewRoutes = require('./src/routes/reviewRoutes');
@@ -33,9 +28,6 @@ const errorHandler = require('./src/middleware/errorHandler');
 const app = express();
 const server = createServer(app);
 app.use(passport.initialize());
-
-// Trust the first proxy (needed for express-rate-limit to correctly get client IP)
-app.set('trust proxy', 1);
 
 
 // Middleware
@@ -52,11 +44,6 @@ const io = new Server(server, {
 // Connect to database
 connectDB();
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
-  max: parseInt(process.env.RATE_LIMIT_MAX) || 100 // limit each IP to 100 requests per windowMs
-});
 
 // Middleware
 app.use(helmet());
@@ -64,10 +51,10 @@ app.use(cors({
   origin: process.env.FRONTEND_URL || "http://localhost:3000",
   credentials: true
 }));
-app.use(morgan('combined'));
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-app.use(limiter);
+
 
 // Make io accessible to our router
 app.use((req, res, next) => {
@@ -151,15 +138,6 @@ app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/orders', orderRoutes);
 
 
-// app.use('/api/users', userRoutes);
-// app.use('/api/reviews', reviewRoutes);
-
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.status(200).json({ message: 'Server is running!' });
-});
-
-
 // 404 handler
 app.use('*', (req, res) => {
     res.status(404).json({
@@ -167,6 +145,8 @@ app.use('*', (req, res) => {
         message: `Route ${req.originalUrl} not found`
     });
 });
+
+
 // Error handling middleware
 app.use(errorHandler);
 

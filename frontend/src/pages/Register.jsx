@@ -100,7 +100,7 @@ const Register = () => {
                     {/* Phone (Optional) */}
                     <div>
                         <label className="block text-sm font-medium text-[#523A28] mb-2" htmlFor="phone">
-                            Phone Number (Optional)
+                            Phone Number 
                         </label>
                         <div className="relative">
                             <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#A47551]" />

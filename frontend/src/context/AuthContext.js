@@ -130,6 +130,7 @@ export const AuthProvider = ({ children }) => {
         return isAuthenticated && user?.role === 'admin';
     };
 
+    
     const value = {
         user,
         isAuthenticated,

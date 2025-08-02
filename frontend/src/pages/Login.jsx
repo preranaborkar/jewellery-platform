@@ -20,9 +20,7 @@ const Login = () => {
         <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-[#E4D4C8] to-[#D0B49F] p-4">
             <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md border border-[#D0B49F]/20">
                 <div className="text-center mb-6">
-                    <div className="w-16 h-16 bg-gradient-to-r from-[#A47551] to-[#523A28] rounded-full flex items-center justify-center mx-auto mb-4">
-                        <LogIn className="h-8 w-8 text-white" />
-                    </div>
+                    
                     <h2 className="text-2xl font-bold text-[#523A28] mb-2">Welcome Back</h2>
                     <p className="text-[#A47551] text-sm">Sign in to your SváRIN account</p>
                 </div>
@@ -77,19 +75,7 @@ const Login = () => {
 
                     {/* Remember Me & Forgot Password */}
                     <div className="flex items-center justify-between">
-                        <div className="flex items-center">
-                            <input
-                                type="checkbox"
-                                id="rememberMe"
-                                name="rememberMe"
-                                className="h-4 w-4 text-[#A47551] focus:ring-[#A47551] border-[#D0B49F] rounded"
-                                checked={form.rememberMe}
-                                onChange={handleChange}
-                            />
-                            <label htmlFor="rememberMe" className="ml-2 block text-sm text-[#523A28]">
-                                Remember me
-                            </label>
-                        </div>
+                        
                         <button
                             type="button"
                             onClick={handleForgotPassword}
@@ -159,12 +145,7 @@ const Login = () => {
                     </button>
                 </div>
 
-                {/* Help Text */}
-                <div className="mt-6 p-4 bg-[#E4D4C8]/30 rounded-lg">
-                    <p className="text-xs text-[#A47551] text-center">
-                        Having trouble signing in? Make sure your email is verified or contact our support team.
-                    </p>
-                </div>
+                
             </div>
         </div>
     );

@@ -82,9 +82,7 @@ const CreateProductPage = () => {
           <h1 className="text-3xl font-bold text-center mb-2" style={{ color: '#523A28' }}>
             Create New Product
           </h1>
-          <p className="text-center" style={{ color: '#A47551' }}>
-            Add a new jewelry item to your collection
-          </p>
+          
         </div>
 
         {/* Error Alert */}
@@ -254,7 +252,7 @@ const CreateProductPage = () => {
               </div>
             </div>
 
-            {/* Right Column - Category & Metal Info */}
+            {/*  Category & Metal Info */}
             <div className="space-y-6">
               <div className="p-6 rounded-lg shadow-lg" style={{ backgroundColor: '#D0B49F' }}>
                 <h2 className="text-xl font-semibold mb-4" style={{ color: '#523A28' }}>
@@ -421,9 +419,7 @@ const CreateProductPage = () => {
                   </div>
                 )}
 
-                <p className="text-xs mt-3" style={{ color: '#A47551' }}>
-                  The first image will be used as the main product image
-                </p>
+               
               </div>
             </div>
           </div>

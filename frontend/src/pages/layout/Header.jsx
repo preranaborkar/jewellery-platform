@@ -50,15 +50,16 @@ const Header = () => {
     { path: '/products?category=necklaces', label: 'Necklaces' },
     { path: '/products?category=earrings', label: 'Earrings' },
     { path: '/products?category=bracelets', label: 'Bracelets' },
+     { path: '/about', label: 'About' },
   ];
 
   // Admin-specific navigation
   const adminNavLinks = [
-    { path: '/dashboard', label: 'Dashboard' },
-    { path: '/admin/products', label: 'Products' },
+    { path: '/admindashboard', label: 'Dashboard' },
+    { path: '/view-all-products', label: 'Products' },
     { path: '/admin/orders', label: 'Orders' },
     { path: '/admin/customers', label: 'Customers' },
-    { path: '/', label: 'Back to Store' },
+    { path: '/', label: 'Home' },
   ];
 
   const currentNavLinks = isAdminPage && isAdmin ? adminNavLinks : navLinks;
@@ -75,7 +76,7 @@ const Header = () => {
           
           {/* Logo */}
           <Link 
-            to={isAdminPage ? "/dashboard" : "/"} 
+            to={isAdminPage ? "/admindashboard" : "/"} 
             className="flex items-center space-x-2 text-[#523A28] hover:text-[#A47551] transition-colors duration-300"
           >
             

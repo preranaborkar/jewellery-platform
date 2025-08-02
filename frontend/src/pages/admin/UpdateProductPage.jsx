@@ -176,9 +176,6 @@ const UpdateProductPage = () => {
               <h1 className="text-3xl font-bold" style={{ color: '#523A28' }}>
                 Update Product
               </h1>
-              <p style={{ color: '#A47551' }}>
-                Edit product information and images
-              </p>
             </div>
           </div>
         </div>
@@ -542,9 +539,7 @@ const UpdateProductPage = () => {
                   </div>
                 )}
 
-                <p className="text-xs mt-3" style={{ color: '#A47551' }}>
-                  New images will be added to existing ones. The first current image will remain as main image unless replaced.
-                </p>
+               
               </div>
             </div>
           </div>

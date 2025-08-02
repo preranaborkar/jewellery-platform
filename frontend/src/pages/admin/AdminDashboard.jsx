@@ -1,8 +1,26 @@
 
 import {  Users, Package,  FileText,  ShoppingCart, DollarSign, Eye, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-
+import { useAuth } from '../../context/AuthContext';
 const AdminDashboard = () => {
+
+    const { isAdmin, isAuthenticated } = useAuth();
+     const navigate = useNavigate();
+  // Check authorization
+    if (!isAuthenticated || !isAdmin()) {
+        return (
+            <div className="min-h-screen bg-[#E4D4C8] flex items-center justify-center">
+                <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full mx-4">
+                    <h2 className="text-2xl font-bold text-[#523A28] mb-4 text-center">
+                        Access Denied
+                    </h2>
+                    <p className="text-[#A47551] text-center">
+                        Only administrators can access this page.
+                    </p>
+                </div>
+            </div>
+        );
+    }
   const statsCards = [
     { title: 'Total Revenue', value: '₹2,45,678', change: '+12.5%', icon: DollarSign, trend: 'up' },
     { title: 'Orders', value: '1,234', change: '+8.2%', icon: ShoppingCart, trend: 'up' },
@@ -24,7 +42,7 @@ const AdminDashboard = () => {
     { name: 'Handcrafted Mugs', sales: 189, revenue: '₹28,350' }
   ];
 
-  const navigate = useNavigate();
+ 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#E4D4C8] to-[#D0B49F]">
       {/* Main Content */}

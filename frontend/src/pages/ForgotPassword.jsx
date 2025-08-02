@@ -17,11 +17,9 @@ const ForgotPassword = () => {
         <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-[#E4D4C8] to-[#D0B49F] p-4">
             <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md border border-[#D0B49F]/20">
                 <div className="text-center mb-6">
-                    <div className="w-16 h-16 bg-gradient-to-r from-[#A47551] to-[#523A28] rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Mail className="h-8 w-8 text-white" />
-                    </div>
+                    
                     <h2 className="text-2xl font-bold text-[#523A28] mb-2">Forgot Password?</h2>
-                    <p className="text-[#A47551] text-sm">No worries! Enter your email address and we'll send you a link to reset your password.</p>
+                    <p className="text-[#A47551] text-sm">No worries! Enter your email address and we'll send you OTP to reset your password.</p>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -68,7 +66,6 @@ const ForgotPassword = () => {
                             </div>
                         ) : (
                             <div className="flex items-center justify-center space-x-2">
-                                <Send className="h-4 w-4" />
                                 <span>Send Reset Link</span>
                             </div>
                         )}
@@ -86,12 +83,7 @@ const ForgotPassword = () => {
                     </button>
                 </div>
 
-                {/* Help Text */}
-                <div className="mt-6 p-4 bg-[#E4D4C8]/30 rounded-lg">
-                    <p className="text-xs text-[#A47551] text-center">
-                        Remember your password? You can always try signing in again or contact our support team if you need help.
-                    </p>
-                </div>
+                
             </div>
         </div>
     );

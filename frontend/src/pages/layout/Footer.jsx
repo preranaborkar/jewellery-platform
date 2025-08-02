@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { 
-  Crown, 
+ 
   Phone, 
   Mail, 
   MapPin, 
@@ -18,14 +18,7 @@ import {
 
 const Footer = () => {
   
-  const categories = [
-    { name: 'Rings', path: '/products?category=engagement-rings' },
-    { name: 'Earrings', path: '/products?category=wedding-bands' },
-    { name: 'Necklaces', path: '/products?category=diamonds' },
-    { name: 'Bracelets', path: '/products?category=gold' },
-    { name: 'Anklets', path: '/products?category=silver' },
-    
-  ];
+ 
 
   const policies = [
     { name: 'Privacy Policy', path: '/privacy' },
@@ -42,12 +35,7 @@ const Footer = () => {
     { icon: Youtube, href: '#', label: 'YouTube' }
   ];
 
-  const trustBadges = [
-    { icon: Shield, text: 'Secure Shopping' },
-    { icon: Award, text: 'Certified Authentic' },
-    { icon: Truck, text: 'Free Shipping' },
-    { icon: Clock, text: '24/7 Support' }
-  ];
+  
 
   return (
     <footer className="bg-gradient-to-br from-[#523A28] to-[#A47551] text-white">
@@ -56,7 +44,7 @@ const Footer = () => {
       <div className="border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 py-12">
           <div className="text-center">
-            <Crown className="h-12 w-12 mx-auto text-[#E4D4C8] mb-4" />
+            
             <h3 className="text-2xl md:text-3xl font-bold mb-2">
               Stay Connected with SváRIN
             </h3>
@@ -116,22 +104,7 @@ const Footer = () => {
 
           
 
-          {/* Categories */}
-          <div>
-            <h4 className="text-lg font-semibold mb-6">Categories</h4>
-            <ul className="space-y-3">
-              {categories.map((category, index) => (
-                <li key={index}>
-                  <Link
-                    to={category.path}
-                    className="text-[#E4D4C8] hover:text-white transition-colors duration-300 text-sm"
-                  >
-                    {category.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+         
 
           {/* Policies & Support */}
           <div>
@@ -154,20 +127,7 @@ const Footer = () => {
         </div>
       </div>
 
-      {/* Trust Badges */}
-      <div className="border-t border-white/10">
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-            {trustBadges.map((badge, index) => (
-              <div key={index} className="flex flex-col items-center space-y-2">
-                <badge.icon className="h-8 w-8 text-[#E4D4C8]" />
-                <span className="text-sm font-medium">{badge.text}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
+      
       {/* Bottom Bar */}
       <div className="border-t border-white/10 bg-[#523A28]">
         <div className="max-w-7xl mx-auto px-4 py-6">

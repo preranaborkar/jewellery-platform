@@ -5,8 +5,8 @@ import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import { GlobalProvider } from './context/GlobalContext';
 import { ProductProvider } from './context/ProductContext';
-import Layout from './components/layout/Layout';
-
+import Layout from './pages/layout/Layout';
+import About from './pages/About'; 
 // User Pages
 import Home from './pages/Home';
 import Register from './pages/Register';
@@ -21,9 +21,10 @@ import CreateProductPage from './pages/admin/CreateProduct';
 import ViewProductPage from './pages/admin/ViewAllProducts';
 import UpdateProductPage from './pages/admin/UpdateProductPage';
 import Orders from './pages/admin/Orders';
+
 // Styles
 import './styles/globals.css';
-import { View } from 'lucide-react';
+
 
 function App() {
   return (
@@ -47,7 +48,8 @@ function App() {
                     <Route path="/create-product" element={<CreateProductPage/>}/>
                     <Route path="/view-all-products" element={<ViewProductPage/>}/>
                     <Route path="/edit-product/:productId" element={<UpdateProductPage />} />
-                    <Route path="/get-orders" element={<Orders/>}></Route>
+                    {/* <Route path="/get-orders" element={<Orders/>}></Route> */}
+                    <Route path="/about" element={<About/>}></Route>
                   </Routes>
                 </Layout>
               </Router>

@@ -1,127 +1,15 @@
 // import React, { useState } from 'react';
-// import { useOrder } from '../../hooks/useOder';
+// import { useOrder, useOrders } from '../../hooks/useOder';
 // import { useAuth } from '../../context/AuthContext';
 
 // const Orders = () => {
-//     const { isAdmin, isAuthenticated } = useAuth();
-//     const {
-//         orders,
-//         stats,
-//         pagination,
-//         loading,
-//         error,
-//         updateFilters,
-//         changePage,
-//         refreshOrders,
-//         clearFilters
-//     } = useOrder();
+    
 
-//     const [filterForm, setFilterForm] = useState({
-//         orderStatus: '',
-//         paymentStatus: '',
-//         paymentMethod: '',
-//         startDate: '',
-//         endDate: ''
-//     });
-
-//     const [selectedOrder, setSelectedOrder] = useState(null);
-
-//     // Check authorization
-//     if (!isAuthenticated || !isAdmin()) {
-//         return (
-//             <div className="min-h-screen bg-[#E4D4C8] flex items-center justify-center">
-//                 <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full mx-4">
-//                     <h2 className="text-2xl font-bold text-[#523A28] mb-4 text-center">
-//                         Access Denied
-//                     </h2>
-//                     <p className="text-[#A47551] text-center">
-//                         Only administrators can access this page.
-//                     </p>
-//                 </div>
-//             </div>
-//         );
-//     }
-
-//     const handleFilterChange = (e) => {
-//         setFilterForm({
-//             ...filterForm,
-//             [e.target.name]: e.target.value
-//         });
-//     };
-
-//     const applyFilters = () => {
-//         updateFilters(filterForm);
-//     };
-
-//     const resetFilters = () => {
-//         setFilterForm({
-//             orderStatus: '',
-//             paymentStatus: '',
-//             paymentMethod: '',
-//             startDate: '',
-//             endDate: ''
-//         });
-//         clearFilters();
-//     };
-
-//     const getStatusColor = (status, type) => {
-//         const statusColors = {
-//             orderStatus: {
-//                 pending: 'bg-yellow-100 text-yellow-800',
-//                 confirmed: 'bg-blue-100 text-blue-800',
-//                 delivered: 'bg-green-100 text-green-800',
-//                 cancelled: 'bg-red-100 text-red-800'
-//             },
-//             paymentStatus: {
-//                 pending: 'bg-yellow-100 text-yellow-800',
-//                 completed: 'bg-green-100 text-green-800',
-//                 failed: 'bg-red-100 text-red-800',
-//                 refunded: 'bg-purple-100 text-purple-800'
-//             }
-//         };
-//         return statusColors[type][status] || 'bg-gray-100 text-gray-800';
-//     };
-
-//     const formatDate = (dateString) => {
-//         return new Date(dateString).toLocaleDateString('en-IN', {
-//             year: 'numeric',
-//             month: 'short',
-//             day: 'numeric',
-//             hour: '2-digit',
-//             minute: '2-digit'
-//         });
-//     };
-
-//     const formatCurrency = (amount) => {
-//         return new Intl.NumberFormat('en-IN', {
-//             style: 'currency',
-//             currency: 'INR'
-//         }).format(amount);
-//     };
-
-//     // Safe array with fallback to empty array
-//     const safeOrders = orders || [];
-
-//     if (loading && safeOrders.length === 0) {
-//         return (
-//             <div className="min-h-screen bg-[#E4D4C8] flex items-center justify-center">
-//                 <div className="text-[#523A28] text-xl">Loading orders...</div>
-//             </div>
-//         );
-//     }
-
+    
 //     return (
 //         <div className="min-h-screen bg-[#E4D4C8] p-4 md:p-6">
 //             <div className="max-w-7xl mx-auto">
-//                 {/* Header */}
-//                 <div className="mb-8">
-//                     <h1 className="text-3xl md:text-4xl font-bold text-[#523A28] mb-2">
-//                         Orders Management
-//                     </h1>
-//                     <p className="text-[#A47551]">
-//                         Manage and track all customer orders
-//                     </p>
-//                 </div>
+
 
 //                 {/* Stats Cards */}
 //                 {stats && (
@@ -318,7 +206,7 @@
 //                                                     View
 //                                                 </button>
 //                                                 <button
-//                                                     onClick={() => {/* Add edit functionality */}}
+//                                                     onClick={() => {/* Add edit functionality */ }}
 //                                                     className="text-blue-600 hover:text-blue-900"
 //                                                 >
 //                                                     Edit
@@ -342,11 +230,10 @@
 //                                     <button
 //                                         onClick={() => changePage(pagination.currentPage - 1)}
 //                                         disabled={!pagination.hasPrevPage}
-//                                         className={`px-4 py-2 text-sm rounded-lg ${
-//                                             pagination.hasPrevPage
+//                                         className={`px-4 py-2 text-sm rounded-lg ${pagination.hasPrevPage
 //                                                 ? 'bg-[#A47551] text-white hover:bg-[#523A28]'
 //                                                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-//                                         }`}
+//                                             }`}
 //                                     >
 //                                         Previous
 //                                     </button>
@@ -356,11 +243,10 @@
 //                                     <button
 //                                         onClick={() => changePage(pagination.currentPage + 1)}
 //                                         disabled={!pagination.hasNextPage}
-//                                         className={`px-4 py-2 text-sm rounded-lg ${
-//                                             pagination.hasNextPage
+//                                         className={`px-4 py-2 text-sm rounded-lg ${pagination.hasNextPage
 //                                                 ? 'bg-[#A47551] text-white hover:bg-[#523A28]'
 //                                                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-//                                         }`}
+//                                             }`}
 //                                     >
 //                                         Next
 //                                     </button>
@@ -464,7 +350,7 @@
 //                                     </div>
 //                                     <div className="flex space-x-2">
 //                                         <button
-//                                             onClick={() => {/* Add update status functionality */}}
+//                                             onClick={() => {/* Add update status functionality */ }}
 //                                             className="bg-[#A47551] text-white px-4 py-2 rounded-lg hover:bg-[#523A28] transition-colors"
 //                                         >
 //                                             Update Status

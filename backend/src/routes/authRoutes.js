@@ -82,10 +82,7 @@ router.post('/login', [
     .notEmpty()
     .withMessage('Password is required'),
   
-  body('rememberMe')
-    .optional()
-    .isBoolean()
-    .withMessage('Remember me must be a boolean value')
+  
 ], login);
 
 

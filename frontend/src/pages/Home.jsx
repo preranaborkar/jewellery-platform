@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
-  Crown, 
-  Star, 
   Shield, 
   Truck, 
   ArrowRight, 
@@ -132,7 +130,7 @@ const Home = () => {
         {/* Hero Content */}
         <div className="relative z-10 text-center text-white max-w-4xl mx-auto px-4">
           <div className="animate-fade-in">
-            <Crown className="h-16 w-16 mx-auto mb-6 text-[#E4D4C8]" />
+           
             <h1 className="text-5xl md:text-7xl font-bold mb-6 tracking-wider">
               {heroSlides[currentSlide].title}
             </h1>
@@ -221,7 +219,6 @@ const Home = () => {
       <section className="py-20 bg-white/60 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-16">
-            <Sparkles className="h-12 w-12 mx-auto text-[#A47551] mb-4" />
             <h2 className="text-4xl md:text-5xl font-bold text-[#523A28] mb-4">
               Why Choose SváRIN?
             </h2>

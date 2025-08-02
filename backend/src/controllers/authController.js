@@ -279,7 +279,7 @@ const login = async (req, res) => {
       });
     }
 
-    const { email, password, rememberMe } = req.body;
+    const { email, password } = req.body;
 
     // Find user with email and include password field
     const user = await User.findOne({ email }).select('+password');
@@ -323,12 +323,12 @@ const login = async (req, res) => {
 
 
     // Generate token
-    const tokenExpiry = rememberMe ? '7d' : '1d';
+    const tokenExpiry = '1d';
     console.log(user.role);
     const token = generateToken(user._id, user.role, tokenExpiry);
 
     // Set cookie
-    const cookieMaxAge = rememberMe ? 7 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
+    const cookieMaxAge = 24 * 60 * 60 * 1000;
     res.cookie('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
