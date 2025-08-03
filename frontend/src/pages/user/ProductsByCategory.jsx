@@ -2,10 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import {
   Search,
-  Filter,
-  Grid,
-  List,
-  ChevronRight,
   Package,
   Star,
   ShoppingCart,
@@ -200,9 +196,7 @@ const handleRemoveFromCart = async (productId) => {
             <button className="p-1.5 rounded-full bg-white shadow-lg hover:bg-gray-50 transition-colors">
               <Heart size={14} style={{ color: '#A47551' }} />
             </button>
-            <button className="p-1.5 rounded-full bg-white shadow-lg hover:bg-gray-50 transition-colors">
-              <Eye size={14} style={{ color: '#A47551' }} />
-            </button>
+           
           </div>
 
           {/* Discount Badge */}
@@ -312,9 +306,9 @@ const handleRemoveFromCart = async (productId) => {
                 <button
                   onClick={() => handleRemoveFromCart(product._id)}
                   disabled={isAddingThisProduct || cartLoading}
-                  className={`w-full font-medium rounded-lg transition-colors flex items-center justify-center gap-2 ${isCompact ? 'px-3 py-1 text-xs' : 'px-4 py-1.5 text-sm'} disabled:opacity-50 disabled:cursor-not-allowed`}
+                  className={`w-full font-medium  rounded-lg transition-colors flex items-center justify-center gap-2 ${isCompact ? 'px-3 py-1 text-xs' : 'px-4 py-1.5 text-sm'} disabled:opacity-50 disabled:cursor-not-allowed`}
                   style={{
-                    backgroundColor: '#dc2626',
+                    backgroundColor: '#c06767ff',
                     color: '#E4D4C8'
                   }}
                 >
@@ -432,9 +426,7 @@ const handleRemoveFromCart = async (productId) => {
           <h1 className="text-3xl font-bold mb-2" style={{ color: '#523A28' }}>
             Products by Category
           </h1>
-          <p style={{ color: '#A47551' }}>
-            Discover our curated collection organized by categories
-          </p>
+          
         </div>
 
         {/* Error Alerts */}
@@ -464,60 +456,7 @@ const handleRemoveFromCart = async (productId) => {
           </div>
         )}
 
-        {/* Controls */}
-        <div className="mb-8 p-4 rounded-lg shadow-lg" style={{ backgroundColor: '#D0B49F' }}>
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            {/* Global Search */}
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2" size={20} style={{ color: '#A47551' }} />
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search all products..."
-                className="w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2"
-                style={{ borderColor: '#A47551' }}
-              />
-            </div>
-
-            {/* Controls */}
-            <div className="flex items-center gap-4">
-              {/* View Mode Toggle */}
-              <div className="flex border rounded-lg overflow-hidden" style={{ borderColor: '#A47551' }}>
-                <button
-                  onClick={() => setViewMode('grid')}
-                  className={`px-3 py-2 text-sm transition-colors ${viewMode === 'grid' ? 'text-white' : ''}`}
-                  style={{
-                    backgroundColor: viewMode === 'grid' ? '#A47551' : 'transparent',
-                    color: viewMode === 'grid' ? 'white' : '#523A28'
-                  }}
-                >
-                  <Grid size={16} />
-                </button>
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={`px-3 py-2 text-sm transition-colors ${viewMode === 'list' ? 'text-white' : ''}`}
-                  style={{
-                    backgroundColor: viewMode === 'list' ? '#A47551' : 'transparent',
-                    color: viewMode === 'list' ? 'white' : '#523A28'
-                  }}
-                >
-                  <List size={16} />
-                </button>
-              </div>
-
-              {/* Refresh Button */}
-              <button
-                onClick={() => fetchAllCategoriesWithProducts()}
-                disabled={loading}
-                className="p-2 rounded-lg border transition-colors disabled:opacity-50"
-                style={{ borderColor: '#A47551', color: '#523A28' }}
-              >
-                <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-              </button>
-            </div>
-          </div>
-        </div>
+     
 
         {/* Loading State */}
         {(categoriesLoading || loading) && categories.length === 0 ? (

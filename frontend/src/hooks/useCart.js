@@ -23,29 +23,48 @@ export const CartProvider = ({ children }) => {
   }, []);
 
   // Fetch cart
-  const fetchCart = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await cartService.getCart();
-      const cartData = response.data || response;
-      setCart(cartData);
-      setCartItems(cartData.items || []);
-      calculateTotals(cartData.items || []);
-    } catch (err) {
-      setError(err.message);
-      console.error('Error fetching cart:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [calculateTotals]);
+const fetchCart = useCallback(async () => {
+  setLoading(true);
+  setError(null);
+  try {
+    const response = await cartService.getCart();
+    console.log('Full cart response:', response); // Debug log
+    
+    // Handle different possible response structures
+    const cartData = response.data?.cart || response.cart || response.data || response;
+    console.log('Processed cart data:', cartData); // Debug log
+    
+    // Extract items array - handle different possible structures
+    const items = cartData?.items || cartData?.products || cartData || [];
+    console.log('Extracted items:', items); // Debug log
+    
+    setCart(cartData);
+    setCartItems(Array.isArray(items) ? items : []);
+    calculateTotals(Array.isArray(items) ? items : []);
+    
+    console.log('Cart state updated with items:', items); // Debug log
+  } catch (err) {
+    console.error('Error in fetchCart:', err); // Debug log
+    setError(err.message);
+    // Set empty state on error
+    setCart(null);
+    setCartItems([]);
+    setCartCount(0);
+    setCartTotal(0);
+  } finally {
+    setLoading(false);
+  }
+}, [calculateTotals]);
 
   // Add to cart
-  const addToCart = useCallback(async (productId, quantity ) => {
+  const addToCart = useCallback(async (productId, quantity) => {
     setLoading(true);
     setError(null);
     try {
+      console.log('Adding to cart:', { productId, quantity }); // Debug log
       const response = await cartService.addToCart(productId, quantity);
+
+      console.log('Add to cart response:', response); // Debug log
       await fetchCart(); // Refresh cart after adding
       return response;
     } catch (err) {
@@ -107,17 +126,38 @@ export const CartProvider = ({ children }) => {
     }
   }, []);
 
+  // In hooks/useCart.js - Replace the existing isInCart function with this:
+
   // Check if product is in cart
   const isInCart = useCallback((productId) => {
-    return cartItems.some(item => item.product._id === productId);
+    console.log('Checking isInCart for productId:', productId);
+    console.log('Current cartItems:', cartItems);
+
+    const found = cartItems.some(item => {
+      // Handle different possible data structures
+      const itemProductId = item.product?._id || item.product?.id || item.productId || item._id;
+      console.log('Comparing:', itemProductId, 'with', productId);
+      return itemProductId === productId;
+    });
+
+    console.log('isInCart result:', found);
+    return found;
   }, [cartItems]);
 
-  // Get cart item quantity
+  // Get cart item quantity  
   const getCartItemQuantity = useCallback((productId) => {
-    const item = cartItems.find(item => item.product._id === productId);
-    return item ? item.quantity : 0;
-  }, [cartItems]);
+    console.log('Getting quantity for productId:', productId);
 
+    const item = cartItems.find(item => {
+      // Handle different possible data structures
+      const itemProductId = item.product?._id || item.product?.id || item.productId || item._id;
+      return itemProductId === productId;
+    });
+
+    const quantity = item ? item.quantity : 0;
+    console.log('Quantity found:', quantity);
+    return quantity;
+  }, [cartItems]);
   // Clear error
   const clearError = useCallback(() => {
     setError(null);

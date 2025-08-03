@@ -24,6 +24,7 @@ import ProductsByCategory from './pages/user/ProductsByCategory';
 import Orders from './pages/admin/Orders';
 import NotFound from './pages/layout/NotFound';
 import ProtectedRoute from './pages/layout/ProtectedRoute';
+import Cart from './pages/user/Cart';
 // Styles
 import './styles/globals.css';
 
@@ -53,7 +54,13 @@ function App() {
                     {/* Protected Routes - User Must Be Authenticated */}
                     <Route path="/dashboard" element={
                       <ProtectedRoute>
-                        <Dashboard />
+                       <Dashboard /> 
+                      </ProtectedRoute>
+                    } />
+
+                     <Route path="/cart" element={
+                      <ProtectedRoute>
+                        <Cart />
                       </ProtectedRoute>
                     } />
                     
