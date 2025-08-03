@@ -132,6 +132,8 @@ const getProductsByCategory = async (req, res) => {
 
         const categoryId = req.params.category;
 
+        console.log('Fetching products for category:', categoryId);
+
         // Check if category exists
         const categoryExists = await Category.findById(categoryId);
         if (!categoryExists) {
@@ -141,6 +143,7 @@ const getProductsByCategory = async (req, res) => {
             });
         }
 
+        console.log('Category exists:', categoryExists.name);
         // Build filter
         const filter = { category: categoryId };
         
@@ -169,6 +172,7 @@ const getProductsByCategory = async (req, res) => {
             .limit(parseInt(limit))
             .lean();
 
+        console.log('Fetched products:', products);
         res.status(200).json({
             success: true,
             data: {

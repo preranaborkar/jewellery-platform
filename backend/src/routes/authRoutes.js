@@ -144,6 +144,6 @@ router.get('/google/callback',
 router.post('/logout', logout);
 
 // Get Profile (Protected)
-router.get('/profile', authenticateToken, getProfile);
+router.get('/profile/:id', authenticateToken, getProfile);
 
 module.exports = router;

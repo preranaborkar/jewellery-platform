@@ -33,6 +33,8 @@ router.post('/',
     createProduct
 );
 
+router.get('/inventory', getInventory);
+
 // Update product with image upload
 router.put('/:id', 
     uploadProductImages, 
@@ -44,7 +46,7 @@ router.get('/', getAllAdminProducts);
 router.delete('/:id', deleteProduct);
 router.get('/:id', getProductById);
 
-router.get('/inventory', getInventory);
+
 
 
 module.exports = router;

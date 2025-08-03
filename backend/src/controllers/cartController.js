@@ -46,8 +46,10 @@ const addToCart = async (req, res) => {
             });
         }
 
-        const { productId, quantity = 1 } = req.body;
+        const { productId, quantity  } = req.body;
+       
         const userId = req.user.userId;
+        console.log('Adding to cart:', { productId, quantity, userId });
 
         // Validate product exists and get product details
         const product = await Product.findById(productId);

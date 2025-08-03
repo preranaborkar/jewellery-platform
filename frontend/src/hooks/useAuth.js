@@ -4,12 +4,12 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import authService from '../services/authService';
-
+// defined state and add validation  and fetch data from services
 export const useLogin = () => {
     const [form, setForm] = useState({
         email: '',
         password: '',
-        rememberMe: false
+       
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -423,6 +423,55 @@ export const useForgotPassword = () => {
     };
 };
 
+
+export const useGetProfileData = () => {
+    const [profileData, setProfileData] = useState({});
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const { user } = useAuth();
+    const navigate = useNavigate();
+    const fetchProfileData = async () => {
+
+        if (!user || !user.userId) {
+            setError('User not authenticated');
+            return;
+        }
+        setLoading(true);
+        setError('');
+        try {
+            const response = await authService.getProfileData(user.userId);
+            setProfileData(response.data.data);
+            console.log('Profile data fetched:', response.data.data);
+        }
+        catch (err) {
+            console.error('Error fetching profile data:', err);
+            const errorMessage = authService.getErrorMessage(err.status, err.data);
+            setError(errorMessage);
+            if (err.status === 401) {
+                navigate('/login');
+            }
+        } finally {
+            setLoading(false);
+        }
+
+
+    };
+
+    useEffect(() => {
+        if (user && user.userId) {
+            fetchProfileData();
+        }
+    }, [user]);
+
+    return {
+        profileData,
+        loading,
+        error,
+        fetchProfileData
+    };
+};
+
+
 export const useResetPassword = () => {
     const [form, setForm] = useState({
         otp: '',
@@ -567,7 +616,7 @@ export const useResetPassword = () => {
         handleChange,
         validateForm,
         handleSubmit,
-        navigateToForgotPassword,
+        navigateToForgotPassword,  
         navigateToLogin,
         togglePasswordVisibility,
         toggleConfirmPasswordVisibility

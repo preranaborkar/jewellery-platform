@@ -64,7 +64,7 @@ const validateReview = (req, res, next) => {
 
 // USER ENDPOINTS
 router.get('/search', searchProducts);
-router.get('/category/:category', validateCategoryId, getProductsByCategory);//already 
+router.get('/category/:category', validateCategoryId, getProductsByCategory); 
 router.get('/:id/reviews', validateObjectId, getProductReviews);
 router.post('/:id/reviews', protect, validateObjectId, validateReview, addProductReview);
 router.get('/:id', validateObjectId, getProductById);
