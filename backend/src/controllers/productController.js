@@ -83,6 +83,9 @@ const getAllProducts = async (req, res) => {
     }
 };
 
+
+
+
 // Get single product by ID
 const getProductById = async (req, res) => {
     try {

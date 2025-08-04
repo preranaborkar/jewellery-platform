@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../hooks/useCart';
@@ -20,6 +20,9 @@ const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showSearchResults, setShowSearchResults] = useState(false);
   
   const { user, logout, isAdmin } = useAuth();
   const { cartItems, cartCount } = useCart();
@@ -43,13 +46,49 @@ const Header = () => {
     location.pathname === route || location.pathname.startsWith(route)
   );
 
-  const handleSearch = (e) => {
+  // Debounced search with 4 second delay
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      setShowSearchResults(false);
+      return;
+    }
+
+    setIsSearching(true);
+    const debounceTimer = setTimeout(async () => {
+      try {
+        const response = await fetch(`/api/products/search?q=${encodeURIComponent(searchQuery.trim())}&limit=5`);
+        const data = await response.json();
+        
+        if (data.success) {
+          setSearchResults(data.data.products);
+          setShowSearchResults(true);
+        }
+      } catch (error) {
+        console.error('Search error:', error);
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 4000); // 4 second delay
+
+    return () => clearTimeout(debounceTimer);
+  }, [searchQuery]);
+
+  const handleSearchSubmit = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      navigate(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
+      navigate(`/search-results?q=${encodeURIComponent(searchQuery.trim())}`);
       setSearchQuery('');
+      setShowSearchResults(false);
       setIsMenuOpen(false);
     }
+  };
+
+  const handleSearchResultClick = (productId) => {
+    navigate(`/product/${productId}`);
+    setSearchQuery('');
+    setShowSearchResults(false);
   };
 
   const handleLogout = () => {
@@ -97,6 +136,74 @@ const Header = () => {
               {shouldShowAdminNav ? 'Admin Panel' : 'SváRIN'}
             </span>
           </Link>
+
+          {/* Desktop Search Bar (Hide on admin pages) */}
+          {!shouldShowAdminNav && (
+            <div className="hidden lg:flex flex-1 max-w-md mx-8 relative">
+              <form onSubmit={handleSearchSubmit} className="w-full relative">
+                <input
+                  type="text"
+                  placeholder="Search jewelry..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-[#D0B49F] rounded-full bg-white focus:outline-none focus:ring-2 focus:ring-[#A47551] focus:border-transparent text-[#523A28] placeholder-[#A47551]/60"
+                />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[#A47551]" />
+                {isSearching && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#A47551]"></div>
+                  </div>
+                )}
+              </form>
+
+              {/* Search Results Dropdown */}
+              {showSearchResults && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-lg border border-[#D0B49F]/20 max-h-96 overflow-y-auto z-50">
+                  {searchResults.length > 0 ? (
+                    <>
+                      {searchResults.map((product) => (
+                        <div
+                          key={product._id}
+                          onClick={() => handleSearchResultClick(product._id)}
+                          className="flex items-center p-3 hover:bg-[#E4D4C8] cursor-pointer border-b border-[#D0B49F]/10 last:border-b-0"
+                        >
+                          <div className="w-12 h-12 bg-gray-100 rounded-lg mr-3 flex-shrink-0">
+                            {product.image && product.image.length > 0 ? (
+                              <img
+                                src={product.image[0]?.url || product.image[0]}
+                                alt={product.name}
+                                className="w-full h-full object-cover rounded-lg"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <Package size={20} style={{ color: '#A47551' }} />
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="text-sm font-medium text-[#523A28] line-clamp-1">{product.name}</h4>
+                            <p className="text-xs text-[#A47551]">₹{product.price}</p>
+                          </div>
+                        </div>
+                      ))}
+                      <div className="p-3 border-t border-[#D0B49F]/20">
+                        <button
+                          onClick={handleSearchSubmit}
+                          className="w-full text-center text-sm text-[#A47551] hover:text-[#523A28] font-medium"
+                        >
+                          View all results for "{searchQuery}"
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="p-4 text-center text-[#A47551]">
+                      <p className="text-sm">No products found for "{searchQuery}"</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center space-x-8">
@@ -264,7 +371,7 @@ const Header = () => {
               
               {/* Mobile Search (Hide on admin pages) */}
               {!shouldShowAdminNav && (
-                <form onSubmit={handleSearch} className="relative">
+                <form onSubmit={handleSearchSubmit} className="relative">
                   <input
                     type="text"
                     placeholder="Search jewelry..."
@@ -273,6 +380,11 @@ const Header = () => {
                     className="w-full pl-10 pr-4 py-3 border border-[#D0B49F] rounded-full bg-white focus:outline-none focus:ring-2 focus:ring-[#A47551] focus:border-transparent text-[#523A28] placeholder-[#A47551]/60"
                   />
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[#A47551]" />
+                  {isSearching && (
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#A47551]"></div>
+                    </div>
+                  )}
                 </form>
               )}
 

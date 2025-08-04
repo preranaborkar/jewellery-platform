@@ -37,7 +37,7 @@ function About() {
         </div>
         
         <div className="mt-8 text-center">
-          <button onClick={()=>{navigate("/")}}
+          <button onClick={()=>{navigate("/products-categories")}}
             className="px-6 py-3 rounded-lg font-semibold text-white hover:opacity-90 transition-opacity"
             style={{ backgroundColor: '#A47551' }}
           >

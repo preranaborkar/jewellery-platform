@@ -67,18 +67,7 @@ export const productService = {
     }
   },
 
-  // Search products
-  searchProducts: async (query, params = {}) => {
-    try {
-      const response = await api.get('/products/search', { 
-        params: { q: query, ...params } 
-      });
-      return response.data;
-    } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to search products');
-    }
-  },
-
+ 
   // Get product reviews
   getProductReviews: async (productId) => {
     try {

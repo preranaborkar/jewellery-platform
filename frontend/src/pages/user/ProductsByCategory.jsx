@@ -29,8 +29,7 @@ const ProductsByCategory = () => {
     fetchProductsByCategory,
     fetchAllCategoriesWithProducts,
     loadMoreProducts,
-    searchInCategory,
-    clearCategorySearch,
+   
     clearError,
     setSelectedCategory,
     getCategoryProducts,
@@ -39,7 +38,7 @@ const ProductsByCategory = () => {
 
   // Cart hook
   const {
-    addToCart, 
+    addToCart,
     removeFromCart,
     isInCart,
     getCartItemQuantity,
@@ -50,13 +49,13 @@ const ProductsByCategory = () => {
 
   // Local state
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
-  const [searchTerm, setSearchTerm] = useState('');
+
   const [expandedCategories, setExpandedCategories] = useState(new Set());
   const [addingToCart, setAddingToCart] = useState(new Set());
   const [showQuantityModal, setShowQuantityModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
-
+  
   // Load initial data
   useEffect(() => {
     if (categories.length > 0) {
@@ -72,16 +71,7 @@ const ProductsByCategory = () => {
     }
   };
 
-  // Handle search within category
-  const handleCategorySearch = async (categoryId, searchValue) => {
-    if (searchValue.trim()) {
-      await searchInCategory(categoryId, searchValue);
-    } else {
-      await clearCategorySearch(categoryId);
-    }
-  };
 
- 
   // Toggle category expansion
   const toggleCategoryExpansion = (categoryId) => {
     const newExpanded = new Set(expandedCategories);
@@ -94,44 +84,44 @@ const ProductsByCategory = () => {
   };
 
   const handleAddToCart = async (productId, selectedQuantity = 1) => {
-  const newAddingToCart = new Set(addingToCart);
-  newAddingToCart.add(productId);
-  setAddingToCart(newAddingToCart);
+    const newAddingToCart = new Set(addingToCart);
+    newAddingToCart.add(productId);
+    setAddingToCart(newAddingToCart);
 
-  try {
-    await addToCart(productId, selectedQuantity);
-    setShowQuantityModal(false);
-    setSelectedProduct(null);
-    setQuantity(1);
-  } catch (error) {
-    console.error('Failed to add to cart:', error);
-  } finally {
-    // Use the current state, not the stale closure
-    setAddingToCart(prev => {
-      const updated = new Set(prev);
-      updated.delete(productId);
-      return updated;
-    });
-  }
-};
+    try {
+      await addToCart(productId, selectedQuantity);
+      setShowQuantityModal(false);
+      setSelectedProduct(null);
+      setQuantity(1);
+    } catch (error) {
+      console.error('Failed to add to cart:', error);
+    } finally {
+      // Use the current state, not the stale closure
+      setAddingToCart(prev => {
+        const updated = new Set(prev);
+        updated.delete(productId);
+        return updated;
+      });
+    }
+  };
   // Add this function to handle remove from cart
-const handleRemoveFromCart = async (productId) => {
-  const newAddingToCart = new Set(addingToCart);
-  newAddingToCart.add(productId);
-  setAddingToCart(newAddingToCart);
+  const handleRemoveFromCart = async (productId) => {
+    const newAddingToCart = new Set(addingToCart);
+    newAddingToCart.add(productId);
+    setAddingToCart(newAddingToCart);
 
-  try {
-    await removeFromCart(productId);
-  } catch (error) {
-    console.error('Failed to remove from cart:', error);
-  } finally {
-    setAddingToCart(prev => {
-      const updated = new Set(prev);
-      updated.delete(productId);
-      return updated;
-    });
-  }
-};
+    try {
+      await removeFromCart(productId);
+    } catch (error) {
+      console.error('Failed to remove from cart:', error);
+    } finally {
+      setAddingToCart(prev => {
+        const updated = new Set(prev);
+        updated.delete(productId);
+        return updated;
+      });
+    }
+  };
 
   // Add this function to open quantity modal
   const openQuantityModal = (product) => {
@@ -196,7 +186,7 @@ const handleRemoveFromCart = async (productId) => {
             <button className="p-1.5 rounded-full bg-white shadow-lg hover:bg-gray-50 transition-colors">
               <Heart size={14} style={{ color: '#A47551' }} />
             </button>
-           
+
           </div>
 
           {/* Discount Badge */}
@@ -354,29 +344,7 @@ const handleRemoveFromCart = async (productId) => {
             </span>
           </div>
 
-          <div className="flex items-center gap-3">
-            {/* Category Search */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2" size={16} style={{ color: '#A47551' }} />
-              <input
-                type="text"
-                placeholder={`Search in ${category.name}...`}
-                className="pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 text-sm w-64"
-                style={{ borderColor: '#A47551' }}
-                onChange={(e) => handleCategorySearch(category._id, e.target.value)}
-              />
-            </div>
-
-            {/* View All Button */}
-            <button
-              onClick={() => handleCategorySelect(category._id)}
-              className="px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 text-sm"
-              style={{ backgroundColor: '#523A28', color: '#E4D4C8' }}
-            >
-              View All
-              <ArrowRight size={14} />
-            </button>
-          </div>
+         
         </div>
 
         {/* Category Description */}
@@ -385,6 +353,8 @@ const handleRemoveFromCart = async (productId) => {
             {category.description}
           </p>
         )}
+
+        
 
         {/* Products Grid */}
         {displayProducts.length > 0 ? (
@@ -426,7 +396,7 @@ const handleRemoveFromCart = async (productId) => {
           <h1 className="text-3xl font-bold mb-2" style={{ color: '#523A28' }}>
             Products by Category
           </h1>
-          
+
         </div>
 
         {/* Error Alerts */}
@@ -456,7 +426,7 @@ const handleRemoveFromCart = async (productId) => {
           </div>
         )}
 
-     
+
 
         {/* Loading State */}
         {(categoriesLoading || loading) && categories.length === 0 ? (

@@ -25,6 +25,7 @@ import Orders from './pages/admin/Orders';
 import NotFound from './pages/layout/NotFound';
 import ProtectedRoute from './pages/layout/ProtectedRoute';
 import Cart from './pages/user/Cart';
+import SearchResults from './pages/user/SearchResult';
 // Styles
 import './styles/globals.css';
 
@@ -48,13 +49,19 @@ function App() {
                     <Route path="/reset-password" element={<ResetPassword />} />
                     <Route path="/auth/google/success" element={<GoogleAuthSuccess />} />
                     <Route path="/about" element={<About />} />
-                    <Route path="/view-all-products" element={<ViewProductPage />} />
+                   
                     <Route path="/products-categories" element={<ProductsByCategory />} />
                     
                     {/* Protected Routes - User Must Be Authenticated */}
                     <Route path="/dashboard" element={
                       <ProtectedRoute>
                        <Dashboard /> 
+                      </ProtectedRoute>
+                    } /> /search-results
+
+                    <Route path="/search-results" element={
+                      <ProtectedRoute>
+                       <SearchResults /> 
                       </ProtectedRoute>
                     } />
 
@@ -70,7 +77,12 @@ function App() {
                         <AdminDashboard />
                       </ProtectedRoute>
                     } />
-                    
+                   
+                     <Route path="/view-all-products" element={
+                      <ProtectedRoute adminOnly={true}>
+                        <ViewProductPage />
+                      </ProtectedRoute>
+                    } />
                     <Route path="/create-product" element={
                       <ProtectedRoute adminOnly={true}>
                         <CreateProductPage />
