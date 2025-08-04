@@ -49,36 +49,36 @@ function App() {
                     <Route path="/reset-password" element={<ResetPassword />} />
                     <Route path="/auth/google/success" element={<GoogleAuthSuccess />} />
                     <Route path="/about" element={<About />} />
-                   
+
                     <Route path="/products-categories" element={<ProductsByCategory />} />
-                    
+
                     {/* Protected Routes - User Must Be Authenticated */}
                     <Route path="/dashboard" element={
                       <ProtectedRoute>
-                       <Dashboard /> 
+                        <Dashboard />
                       </ProtectedRoute>
                     } /> /search-results
 
                     <Route path="/search-results" element={
                       <ProtectedRoute>
-                       <SearchResults /> 
+                        <SearchResults />
                       </ProtectedRoute>
                     } />
 
-                     <Route path="/cart" element={
+                    <Route path="/cart" element={
                       <ProtectedRoute>
                         <Cart />
                       </ProtectedRoute>
                     } />
-                    
+
                     {/* Admin Only Routes */}
                     <Route path="/admindashboard" element={
                       <ProtectedRoute adminOnly={true}>
                         <AdminDashboard />
                       </ProtectedRoute>
                     } />
-                   
-                     <Route path="/view-all-products" element={
+
+                    <Route path="/view-all-products" element={
                       <ProtectedRoute adminOnly={true}>
                         <ViewProductPage />
                       </ProtectedRoute>
@@ -88,20 +88,15 @@ function App() {
                         <CreateProductPage />
                       </ProtectedRoute>
                     } />
-                    
+
                     <Route path="/edit-product/:productId" element={
                       <ProtectedRoute adminOnly={true}>
                         <UpdateProductPage />
                       </ProtectedRoute>
                     } />
-                    
-                    {/* Uncomment and protect if needed */}
-                    {/* <Route path="/get-orders" element={
-                      <ProtectedRoute adminOnly={true}>
-                        <Orders />
-                      </ProtectedRoute>
-                    } /> */}
-                    
+
+
+
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </Layout>

@@ -152,23 +152,7 @@ const SearchResults = () => {
               </div>
 
               <div className="space-y-4">
-                {/* Sort */}
-                <div>
-                  <label className="block text-sm font-medium text-[#523A28] mb-2">Sort By</label>
-                  <select
-                    value={filters.sort}
-                    onChange={(e) => handleFilterChange('sort', e.target.value)}
-                    className="w-full p-2 border border-[#D0B49F] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A47551]"
-                  >
-                    <option value="-createdAt">Newest First</option>
-                    <option value="createdAt">Oldest First</option>
-                    <option value="price">Price: Low to High</option>
-                    <option value="-price">Price: High to Low</option>
-                    <option value="-ratingsAverage">Rating: High to Low</option>
-                    <option value="name">Name: A to Z</option>
-                  </select>
-                </div>
-
+               
                 {/* Price Range */}
                 <div>
                   <label className="block text-sm font-medium text-[#523A28] mb-2">Price Range</label>
