@@ -472,6 +472,54 @@ export const useGetProfileData = () => {
 };
 
 
+export const useUpdateProfile = () => {
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [success, setSuccess] = useState(false);
+    const { user, updateUser } = useAuth();
+    const navigate = useNavigate();
+
+    const updateProfile = async (profileData) => {
+        if (!user || !user.userId) {
+            setError('User not authenticated');
+            return;
+        }
+
+        setLoading(true);
+        setError('');
+        setSuccess(false);
+
+        try {
+            const response = await authService.updateProfile(user.userId, profileData);
+            
+            if (response.success) {
+                // Update user context with new data
+                updateUser(response.data);
+                setSuccess(true);
+                setTimeout(() => setSuccess(false), 3000);
+            }
+        } catch (err) {
+            console.error('Error updating profile:', err);
+            const errorMessage = authService.getErrorMessage(err.status, err.data || {});
+            setError(errorMessage);
+            
+            if (err.status === 401) {
+                navigate('/login');
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return {
+        updateProfile,
+        loading,
+        error,
+        success,
+        setError
+    };
+};
+
 export const useResetPassword = () => {
     const [form, setForm] = useState({
         otp: '',

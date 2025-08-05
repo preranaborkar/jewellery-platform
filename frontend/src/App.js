@@ -26,6 +26,7 @@ import NotFound from './pages/layout/NotFound';
 import ProtectedRoute from './pages/layout/ProtectedRoute';
 import Cart from './pages/user/Cart';
 import SearchResults from './pages/user/SearchResult';
+import ProfilePage from './pages/user/UserProfile';
 // Styles
 import './styles/globals.css';
 
@@ -69,8 +70,13 @@ function App() {
                       <ProtectedRoute>
                         <Cart />
                       </ProtectedRoute>
-                    } />
+                    } />  
 
+                     <Route path="/profile" element={
+                      <ProtectedRoute>
+                        <ProfilePage />
+                      </ProtectedRoute>
+                    } /> 
                     {/* Admin Only Routes */}
                     <Route path="/admindashboard" element={
                       <ProtectedRoute adminOnly={true}>

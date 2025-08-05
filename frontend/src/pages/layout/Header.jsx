@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../hooks/useCart';
-import { 
-  Search, 
-  ShoppingCart, 
-  User, 
-  Menu, 
-  X, 
+import {
+  Search,
+  ShoppingCart,
+  User,
+  Menu,
+  X,
   Heart,
   LogOut,
   Package,
@@ -23,17 +23,17 @@ const Header = () => {
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showSearchResults, setShowSearchResults] = useState(false);
-  
+
   const { user, logout, isAdmin } = useAuth();
   const { cartItems, cartCount } = useCart();
   const navigate = useNavigate();
   const location = useLocation();
-  const {profileData}=useGetProfileData();
+  const { profileData } = useGetProfileData();
 
   // Updated admin page detection - include all your admin routes
   const adminRoutes = [
     '/admindashboard',
-    '/dashboard', 
+    '/dashboard',
     '/create-product',
     '/view-all-products',
     '/edit-product',
@@ -41,8 +41,8 @@ const Header = () => {
     '/admin/customers',
     '/get-orders'
   ];
-  
-  const isAdminPage = adminRoutes.some(route => 
+
+  const isAdminPage = adminRoutes.some(route =>
     location.pathname === route || location.pathname.startsWith(route)
   );
 
@@ -59,7 +59,7 @@ const Header = () => {
       try {
         const response = await fetch(`/api/products/search?q=${encodeURIComponent(searchQuery.trim())}&limit=5`);
         const data = await response.json();
-        
+
         if (data.success) {
           setSearchResults(data.data.products);
           setShowSearchResults(true);
@@ -126,10 +126,10 @@ const Header = () => {
     <header className="bg-white/95 backdrop-blur-md shadow-lg sticky top-0 z-50 border-b border-[#D0B49F]/20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 lg:h-20">
-          
+
           {/* Logo */}
-          <Link 
-            to={shouldShowAdminNav ? "/admindashboard" : "/"} 
+          <Link
+            to={shouldShowAdminNav ? "/admindashboard" : "/"}
             className="flex items-center space-x-2 text-[#523A28] hover:text-[#A47551] transition-colors duration-300"
           >
             <span className="text-xl lg:text-3xl font-bold tracking-wide">
@@ -211,11 +211,10 @@ const Header = () => {
               <Link
                 key={link.path}
                 to={link.path}
-                className={`relative px-3 py-2 text-sm font-medium transition-all duration-300 hover:text-[#A47551] ${
-                  isActiveLink(link.path) 
-                    ? 'text-[#A47551]' 
+                className={`relative px-3 py-2 text-sm font-medium transition-all duration-300 hover:text-[#A47551] ${isActiveLink(link.path)
+                    ? 'text-[#A47551]'
                     : 'text-[#523A28]'
-                }`}
+                  }`}
               >
                 {link.label}
                 {isActiveLink(link.path) && (
@@ -227,7 +226,7 @@ const Header = () => {
 
           {/* Right Side Actions */}
           <div className="flex items-center space-x-4">
-            
+
             {/* Admin Dashboard Link (when user is admin but not on admin page) */}
             {user && isAdmin() && !shouldShowAdminNav && (
               <Link
@@ -276,9 +275,9 @@ const Header = () => {
                     <span className="text-white font-medium text-sm">
                       {profileData.fullName?.charAt(0)?.toUpperCase() || profileData.firstName?.charAt(0)?.toUpperCase() || 'U'}
                     </span>
-                  </div> 
+                  </div>
                   <span className="hidden md:block text-sm font-medium">
-                    {profileData.fullName || profileData.firstName}
+                    {profileData.fullName || profileData.firstName || 'User'}
                   </span>
                 </button>
 
@@ -287,12 +286,17 @@ const Header = () => {
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-[#D0B49F]/20 py-2 z-50">
                     <div className="px-4 py-2 border-b border-[#D0B49F]/20">
                       <p className="text-sm font-medium text-[#523A28]">
-                        {profileData.fullName || `${profileData.firstName} ${profileData.lastName}`}
+                        {profileData.fullName
+                          ? profileData.fullName
+                          : (profileData.firstName && profileData.lastName)
+                            ? `${profileData.firstName} ${profileData.lastName}`
+                            : 'User'}
                       </p>
+
                       <p className="text-xs text-[#A47551]">{user.email}</p>
                       {isAdmin() && <span className="text-xs text-[#A47551] bg-[#E4D4C8] px-2 py-1 rounded-full mt-1 inline-block">Admin</span>}
                     </div>
-                    
+
                     {!shouldShowAdminNav && (
                       <>
                         <Link
@@ -303,15 +307,8 @@ const Header = () => {
                           <Settings className="h-4 w-4" />
                           <span>Profile</span>
                         </Link>
-                        
-                        <Link
-                          to="/orders"
-                          className="flex items-center space-x-2 px-4 py-2 text-[#523A28] hover:bg-[#E4D4C8] transition-colors duration-200"
-                          onClick={() => setIsUserMenuOpen(false)}
-                        >
-                          <Package className="h-4 w-4" />
-                          <span>My Orders</span>
-                        </Link>
+
+                       
                       </>
                     )}
 
@@ -325,7 +322,7 @@ const Header = () => {
                         <span>{shouldShowAdminNav ? 'Visit Store' : 'Admin Dashboard'}</span>
                       </Link>
                     )}
-                    
+
                     <button
                       onClick={handleLogout}
                       className="flex items-center space-x-2 w-full px-4 py-2 text-[#523A28] hover:bg-[#E4D4C8] transition-colors duration-200 border-t border-[#D0B49F]/20 mt-2"
@@ -368,7 +365,7 @@ const Header = () => {
         {isMenuOpen && (
           <div className="lg:hidden absolute top-full left-0 right-0 bg-white/95 backdrop-blur-md border-b border-[#D0B49F]/20 shadow-lg">
             <div className="px-4 py-4 space-y-4">
-              
+
               {/* Mobile Search (Hide on admin pages) */}
               {!shouldShowAdminNav && (
                 <form onSubmit={handleSearchSubmit} className="relative">
@@ -395,11 +392,10 @@ const Header = () => {
                     key={link.path}
                     to={link.path}
                     onClick={() => setIsMenuOpen(false)}
-                    className={`block px-4 py-3 text-base font-medium transition-colors duration-300 rounded-lg ${
-                      isActiveLink(link.path)
+                    className={`block px-4 py-3 text-base font-medium transition-colors duration-300 rounded-lg ${isActiveLink(link.path)
                         ? 'bg-[#E4D4C8] text-[#A47551]'
                         : 'text-[#523A28] hover:bg-[#E4D4C8] hover:text-[#A47551]'
-                    }`}
+                      }`}
                   >
                     {link.label}
                   </Link>
@@ -440,7 +436,7 @@ const Header = () => {
                       <span>{shouldShowAdminNav ? 'Visit Store' : 'Admin Panel'}</span>
                     </Link>
                   )}
-                  
+
                   <button
                     onClick={() => {
                       handleLogout();

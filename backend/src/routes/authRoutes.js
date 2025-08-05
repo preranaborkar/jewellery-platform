@@ -13,9 +13,11 @@ const {
   resetPassword,
   changePassword,
   logout,
-  getProfile
+  getProfile,
+  updateProfile
 } = require('../controllers/authController');
 const { authenticateToken } = require('../middleware/auth');
+const { updateCartItem } = require('../controllers/cartController');
 
 const router = express.Router();
 
@@ -145,5 +147,7 @@ router.post('/logout', logout);
 
 // Get Profile (Protected)
 router.get('/profile/:id', authenticateToken, getProfile);
+
+router.put('/profile/:userId', authenticateToken, updateProfile);
 
 module.exports = router;

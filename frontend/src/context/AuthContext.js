@@ -21,7 +21,7 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         const userData = localStorage.getItem('customer');
         const token = localStorage.getItem('token');
-        
+
         if (userData && token) {
             try {
                 setUser(JSON.parse(userData));
@@ -54,7 +54,7 @@ export const AuthProvider = ({ children }) => {
 
         localStorage.setItem('customer', JSON.stringify(userInfo));
         localStorage.setItem('token', token);
-        
+
         setUser(userInfo);
         setIsAuthenticated(true);
 
@@ -71,7 +71,7 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem('resetToken');
         localStorage.removeItem('resetEmail');
         localStorage.removeItem('verificationEmail');
-        
+
         setUser(null);
         setIsAuthenticated(false);
         setRegistrationData(null);
@@ -95,7 +95,7 @@ export const AuthProvider = ({ children }) => {
             email: userData.email,
             message: userData.message || 'Registration successful! Please check your email for OTP verification.'
         });
-        
+
         return userData;
     };
 
@@ -103,7 +103,7 @@ export const AuthProvider = ({ children }) => {
     const completeRegistration = (userData, token) => {
         // Clear temporary registration data
         clearRegistrationData();
-        
+
         // Use the same login function to set user data
         return login(userData, token);
     };
@@ -126,11 +126,28 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem('resetEmail');
     };
 
+    // Add this function after the clearResetToken function
+    const updateUser = (updatedUserData) => {
+        // Update the user state
+        const updatedUser = {
+            ...user,
+            ...updatedUserData,
+            // Ensure userId is preserved if it exists
+            userId: updatedUserData.userId || user?.userId
+        };
+
+        setUser(updatedUser);
+
+        // Update localStorage as well
+        localStorage.setItem('customer', JSON.stringify(updatedUser));
+    };
+
+
     const isAdmin = () => {
         return isAuthenticated && user?.role === 'admin';
     };
 
-    
+
     const value = {
         user,
         isAuthenticated,
@@ -144,7 +161,8 @@ export const AuthProvider = ({ children }) => {
         handleRegistrationSuccess,
         completeRegistration,
         setPasswordResetToken,
-        clearResetToken
+        clearResetToken,
+        updateUser
     };
 
     return (

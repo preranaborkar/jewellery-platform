@@ -685,6 +685,95 @@ const getProfile = async (req, res) => {
     });
   }
 };
+
+
+
+const updateProfile = async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const { firstName, lastName, phone, address } = req.body;
+
+    console.log('Updating profile for userId:', userId, 'with data:', req.user.id);
+
+    // Validate user ID matches authenticated user
+    // if (userId != req.user.id) {
+    //   return res.status(403).json({
+    //     success: false,
+    //     message: 'Unauthorized to update this profile'
+    //   });
+    // }
+
+    // Validate input
+    if (!firstName || !lastName) {
+      return res.status(400).json({
+        success: false,
+        message: 'First name and last name are required'
+      });
+    }
+
+    // Update user profile
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      {
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        fullName: `${firstName.trim()} ${lastName.trim()}`,
+        phone: phone?.trim() || '',
+        address: address || {},
+        updatedAt: new Date()
+      },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Prepare response data (exclude sensitive fields)
+    const responseData = {
+      userId: updatedUser._id,
+      firstName: updatedUser.firstName,
+      lastName: updatedUser.lastName,
+      fullName: updatedUser.fullName,
+      email: updatedUser.email,
+      phone: updatedUser.phone,
+      avatar: updatedUser.avatar,
+      role: updatedUser.role,
+      isVerified: updatedUser.isVerified,
+      address: updatedUser.address,
+      updatedAt: updatedUser.updatedAt,
+      wishlist: updatedUser.wishlist || []
+    };
+
+    res.status(200).json({
+      success: true,
+      message: 'Profile updated successfully',
+      data: responseData
+    });
+
+  } catch (error) {
+    console.error('Update profile error:', error);
+    
+    // Handle validation errors
+    if (error.name === 'ValidationError') {
+      const errors = Object.values(error.errors).map(err => err.message);
+      return res.status(400).json({
+        success: false,
+        message: 'Validation error',
+        errors: errors
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+};
+
 // Update your module.exports to include all functions
 module.exports = {
   register,
@@ -696,7 +785,8 @@ module.exports = {
   resetPassword,
   changePassword,
   logout,
-  getProfile
+  getProfile,
+  updateProfile
 };
 
 

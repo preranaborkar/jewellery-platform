@@ -344,8 +344,45 @@ class AuthService {
         }
     }
 }
-                     
 
+// Add this method to your AuthService class in authService.js
+
+async updateProfile(userId, profileData) {
+    try {
+        const response = await fetch(`/api/auth/profile/${userId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify(profileData)
+        });
+
+        const data = await response.json();
+        console.log('Update profile response:', data);
+
+        if (!response.ok) {
+            throw {
+                status: response.status,
+                data: data
+            };
+        }
+
+        return {
+            success: true,
+            data: data
+        };
+    } catch (error) {
+        if (error.status) {
+            throw error;
+        } else {
+            throw {
+                status: 0,
+                data: { message: 'Network error. Please try again.' }
+            };
+        }
+    }
+}
 
 
     // Function to handle register-specific error responses
