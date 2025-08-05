@@ -15,6 +15,7 @@ import {
   BarChart3
 } from 'lucide-react';
 import { useGetProfileData } from '../../hooks/useAuth';
+import useWishlist from '../../hooks/useWishList';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -29,7 +30,7 @@ const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { profileData } = useGetProfileData();
-
+ const { itemCount } = useWishlist();
   // Updated admin page detection - include all your admin routes
   const adminRoutes = [
     '/admindashboard',
@@ -212,8 +213,8 @@ const Header = () => {
                 key={link.path}
                 to={link.path}
                 className={`relative px-3 py-2 text-sm font-medium transition-all duration-300 hover:text-[#A47551] ${isActiveLink(link.path)
-                    ? 'text-[#A47551]'
-                    : 'text-[#523A28]'
+                  ? 'text-[#A47551]'
+                  : 'text-[#523A28]'
                   }`}
               >
                 {link.label}
@@ -245,8 +246,14 @@ const Header = () => {
                 className="relative p-2 text-[#523A28] hover:text-[#A47551] transition-colors duration-300 hover:bg-[#E4D4C8] rounded-full"
               >
                 <Heart className="h-5 w-5" />
+                {itemCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
+                    {itemCount > 99 ? '99+' : itemCount}
+                  </span>
+                )}
               </Link>
             )}
+
 
             {/* Cart (Hide on admin pages) */}
             {!shouldShowAdminNav && (
@@ -297,7 +304,7 @@ const Header = () => {
                       {isAdmin() && <span className="text-xs text-[#A47551] bg-[#E4D4C8] px-2 py-1 rounded-full mt-1 inline-block">Admin</span>}
                     </div>
 
-                    {!shouldShowAdminNav && (
+                    
                       <>
                         <Link
                           to="/profile"
@@ -308,20 +315,11 @@ const Header = () => {
                           <span>Profile</span>
                         </Link>
 
-                       
-                      </>
-                    )}
 
-                    {isAdmin() && (
-                      <Link
-                        to={shouldShowAdminNav ? "/" : "/admindashboard"}
-                        className="flex items-center space-x-2 px-4 py-2 text-[#523A28] hover:bg-[#E4D4C8] transition-colors duration-200"
-                        onClick={() => setIsUserMenuOpen(false)}
-                      >
-                        <BarChart3 className="h-4 w-4" />
-                        <span>{shouldShowAdminNav ? 'Visit Store' : 'Admin Dashboard'}</span>
-                      </Link>
-                    )}
+                      </>
+                    
+
+                   
 
                     <button
                       onClick={handleLogout}
@@ -393,8 +391,8 @@ const Header = () => {
                     to={link.path}
                     onClick={() => setIsMenuOpen(false)}
                     className={`block px-4 py-3 text-base font-medium transition-colors duration-300 rounded-lg ${isActiveLink(link.path)
-                        ? 'bg-[#E4D4C8] text-[#A47551]'
-                        : 'text-[#523A28] hover:bg-[#E4D4C8] hover:text-[#A47551]'
+                      ? 'bg-[#E4D4C8] text-[#A47551]'
+                      : 'text-[#523A28] hover:bg-[#E4D4C8] hover:text-[#A47551]'
                       }`}
                   >
                     {link.label}

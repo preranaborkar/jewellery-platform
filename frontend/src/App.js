@@ -27,6 +27,7 @@ import ProtectedRoute from './pages/layout/ProtectedRoute';
 import Cart from './pages/user/Cart';
 import SearchResults from './pages/user/SearchResult';
 import ProfilePage from './pages/user/UserProfile';
+import WishList from './pages/user/WishList';
 // Styles
 import './styles/globals.css';
 
@@ -72,6 +73,12 @@ function App() {
                       </ProtectedRoute>
                     } />  
 
+                    <Route path="/wishlist" element={
+                      <ProtectedRoute>
+                        <WishList />
+                      </ProtectedRoute>
+                    } />  
+                    
                      <Route path="/profile" element={
                       <ProtectedRoute>
                         <ProfilePage />
@@ -101,8 +108,7 @@ function App() {
                       </ProtectedRoute>
                     } />
 
-
-
+                   
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </Layout>

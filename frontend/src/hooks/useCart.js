@@ -23,38 +23,38 @@ export const CartProvider = ({ children }) => {
   }, []);
 
   // Fetch cart
-const fetchCart = useCallback(async () => {
-  setLoading(true);
-  setError(null);
-  try {
-    const response = await cartService.getCart();
-    console.log('Full cart response:', response); // Debug log
-    
-    // Handle different possible response structures
-    const cartData = response.data?.cart || response.cart || response.data || response;
-    console.log('Processed cart data:', cartData); // Debug log
-    
-    // Extract items array - handle different possible structures
-    const items = cartData?.items || cartData?.products || cartData || [];
-    console.log('Extracted items:', items); // Debug log
-    
-    setCart(cartData);
-    setCartItems(Array.isArray(items) ? items : []);
-    calculateTotals(Array.isArray(items) ? items : []);
-    
-    console.log('Cart state updated with items:', items); // Debug log
-  } catch (err) {
-    console.error('Error in fetchCart:', err); // Debug log
-    setError(err.message);
-    // Set empty state on error
-    setCart(null);
-    setCartItems([]);
-    setCartCount(0);
-    setCartTotal(0);
-  } finally {
-    setLoading(false);
-  }
-}, [calculateTotals]);
+  const fetchCart = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await cartService.getCart();
+      console.log('Full cart response:', response); // Debug log
+
+      // Handle different possible response structures
+      const cartData = response.data?.cart || response.cart || response.data || response;
+      console.log('Processed cart data:', cartData); // Debug log
+
+      // Extract items array - handle different possible structures
+      const items = cartData?.items || cartData?.products || cartData || [];
+      console.log('Extracted items:', items); // Debug log
+
+      setCart(cartData);
+      setCartItems(Array.isArray(items) ? items : []);
+      calculateTotals(Array.isArray(items) ? items : []);
+
+      console.log('Cart state updated with items:', items); // Debug log
+    } catch (err) {
+      console.error('Error in fetchCart:', err); // Debug log
+      setError(err.message);
+      // Set empty state on error
+      setCart(null);
+      setCartItems([]);
+      setCartCount(0);
+      setCartTotal(0);
+    } finally {
+      setLoading(false);
+    }
+  }, [calculateTotals]);
 
   // Add to cart
   const addToCart = useCallback(async (productId, quantity) => {

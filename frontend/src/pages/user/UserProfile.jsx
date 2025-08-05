@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, Mail, Phone, MapPin, Heart, Shield, Edit3, Camera, Package, Settings, Check, X } from 'lucide-react';
 import { useGetProfileData, useUpdateProfile, useChangePassword } from '../../hooks/useAuth';
+import {useCart} from '../../hooks/useCart';    
 
 const ProfilePage = () => {
     const { profileData, loading, error, fetchProfileData } = useGetProfileData();
@@ -19,6 +20,8 @@ const ProfilePage = () => {
         }
     });
 
+     const { cartItems, cartCount } = useCart();
+
     const [showPasswordChange, setShowPasswordChange] = useState(false);
     const [passwordForm, setPasswordForm] = useState({
         currentPassword: '',
@@ -35,7 +38,7 @@ const ProfilePage = () => {
         role: profileData?.role || 'customer',
         isVerified: profileData?.isVerified ?? true,
         createdAt: profileData?.createdAt || '2024-01-15',
-        wishlistCount: profileData?.wishlist?.length || 12,
+        wishlistCount: profileData?.wishlist?.length ,
         ordersCount: 8,
         address: profileData?.address || {
             street: '123 Jewelry Lane',
@@ -106,8 +109,6 @@ const ProfilePage = () => {
 
     const tabs = [
         { id: 'profile', label: 'Profile', icon: User },
-        { id: 'orders', label: 'Orders', icon: Package },
-        { id: 'wishlist', label: 'Wishlist', icon: Heart },
         { id: 'settings', label: 'Settings', icon: Settings }
     ];
 
@@ -137,9 +138,7 @@ const ProfilePage = () => {
                                     </div>
                                 )}
                             </div>
-                            <button className="absolute bottom-2 right-2 w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center hover:scale-105 transition-transform">
-                                <Camera size={16} style={{ color: '#523A28' }} />
-                            </button>
+                            
                         </div>
 
                         {/* User Info */}
@@ -148,9 +147,7 @@ const ProfilePage = () => {
                                 <h1 className="text-3xl font-bold text-white">
                                     {userData.firstName} {userData.lastName}
                                 </h1>
-                                {userData.isVerified && (
-                                    <Shield size={20} className="text-green-400" />
-                                )}
+                                
                             </div>
                             <p className="text-white opacity-90 mb-1">{userData.email}</p>
                             <p className="text-white opacity-80 capitalize">{userData.role} Member</p>
@@ -162,6 +159,10 @@ const ProfilePage = () => {
                                 <div className="text-center">
                                     <div className="text-2xl font-bold text-white">{userData.wishlistCount}</div>
                                     <div className="text-white opacity-80 text-sm">Wishlist</div>
+                                </div>
+                                <div className="text-center">
+                                    <div className="text-2xl font-bold text-white">{cartCount}</div>
+                                    <div className="text-white opacity-80 text-sm">Cart</div>
                                 </div>
                             </div>
                         </div>

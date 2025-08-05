@@ -1,98 +1,57 @@
-// components/ProductsByCategory.jsx
-import React, { useState, useEffect } from 'react';
+// components/Wishlist.jsx
+import React, { useState } from 'react';
 import {
-  Search,
+  Heart,
+  ShoppingCart,
+  X,
+  RefreshCw,
   Package,
   Star,
-  ShoppingCart,
-  Eye,
-  Heart,
-  ArrowRight,
-  RefreshCw,
-  AlertCircle,
-  X,
   Check,
-  ShoppingBag
+  ShoppingBag,
+  Trash2
 } from 'lucide-react';
-import useProductsByCategory from '../../hooks/useProductsByCategory';
-import { useCart } from '../../hooks/useCart';
 import { useWishlist } from '../../hooks/useWishList';
+import { useCart } from '../../hooks/useCart'
 
-const ProductsByCategory = () => {
+const Wishlist = () => {
   const {
-    categories,
-    productsByCategory,
+    wishlist,
     loading,
-    categoriesLoading,
     error,
-    selectedCategory,
-    fetchCategories,
-    fetchProductsByCategory,
-    fetchAllCategoriesWithProducts,
-    loadMoreProducts,
-
-    clearError,
-    setSelectedCategory,
-    getCategoryProducts,
-    getCategoryById
-  } = useProductsByCategory();
-
-
-  const {
-    addToWishlist,
     removeFromWishlist,
-    toggleWishlist,
-    isInWishlist,
-    loading: wishlistLoading,
-    error: wishlistError,
-    clearError: clearWishlistError
+    clearWishlist,
+    clearError
   } = useWishlist();
-  // Cart hook
+
   const {
     addToCart,
-    removeFromCart,
     isInCart,
     getCartItemQuantity,
+    removeFromCart,
     loading: cartLoading,
     error: cartError,
     clearError: clearCartError
   } = useCart();
 
-  // Local state
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
-  const [addingToWishlist, setAddingToWishlist] = useState(new Set());
-  const [expandedCategories, setExpandedCategories] = useState(new Set());
+  const [removingFromWishlist, setRemovingFromWishlist] = useState(new Set());
   const [addingToCart, setAddingToCart] = useState(new Set());
   const [showQuantityModal, setShowQuantityModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
 
-  // Load initial data
-  useEffect(() => {
-    if (categories.length > 0) {
-      fetchAllCategoriesWithProducts(8);
-    }
-  }, [categories, fetchAllCategoriesWithProducts]);
-
-  // Handle category selection
-  const handleCategorySelect = (categoryId) => {
-    setSelectedCategory(categoryId);
-    if (!productsByCategory[categoryId]) {
-      fetchProductsByCategory(categoryId);
-    }
-  };
-
-  const handleWishlistToggle = async (productId) => {
-    const newAddingToWishlist = new Set(addingToWishlist);
-    newAddingToWishlist.add(productId);
-    setAddingToWishlist(newAddingToWishlist);
+  // Handle remove from wishlist
+  const handleRemoveFromWishlist = async (productId) => {
+    const newRemoving = new Set(removingFromWishlist);
+    newRemoving.add(productId);
+    setRemovingFromWishlist(newRemoving);
 
     try {
-      await toggleWishlist(productId);
+      await removeFromWishlist(productId);
     } catch (error) {
-      console.error('Failed to toggle wishlist:', error);
+      console.error('Failed to remove from wishlist:', error);
     } finally {
-      setAddingToWishlist(prev => {
+      setRemovingFromWishlist(prev => {
         const updated = new Set(prev);
         updated.delete(productId);
         return updated;
@@ -100,17 +59,7 @@ const ProductsByCategory = () => {
     }
   };
 
-  // Toggle category expansion
-  const toggleCategoryExpansion = (categoryId) => {
-    const newExpanded = new Set(expandedCategories);
-    if (newExpanded.has(categoryId)) {
-      newExpanded.delete(categoryId);
-    } else {
-      newExpanded.add(categoryId);
-    }
-    setExpandedCategories(newExpanded);
-  };
-
+  // Handle add to cart
   const handleAddToCart = async (productId, selectedQuantity = 1) => {
     const newAddingToCart = new Set(addingToCart);
     newAddingToCart.add(productId);
@@ -124,7 +73,6 @@ const ProductsByCategory = () => {
     } catch (error) {
       console.error('Failed to add to cart:', error);
     } finally {
-      // Use the current state, not the stale closure
       setAddingToCart(prev => {
         const updated = new Set(prev);
         updated.delete(productId);
@@ -132,7 +80,8 @@ const ProductsByCategory = () => {
       });
     }
   };
-  // Add this function to handle remove from cart
+
+  // Handle remove from cart
   const handleRemoveFromCart = async (productId) => {
     const newAddingToCart = new Set(addingToCart);
     newAddingToCart.add(productId);
@@ -151,7 +100,7 @@ const ProductsByCategory = () => {
     }
   };
 
-  // Add this function to open quantity modal
+  // Open quantity modal
   const openQuantityModal = (product) => {
     setSelectedProduct(product);
     setQuantity(1);
@@ -160,9 +109,18 @@ const ProductsByCategory = () => {
 
   // Handle proceed to order
   const handleProceedToOrder = (productId) => {
-    // Navigate to checkout or order page
-    // You can implement this based on your routing setup
     window.location.href = '/checkout';
+  };
+
+  // Handle clear all wishlist
+  const handleClearWishlist = async () => {
+    if (window.confirm('Are you sure you want to clear your entire wishlist?')) {
+      try {
+        await clearWishlist();
+      } catch (error) {
+        console.error('Failed to clear wishlist:', error);
+      }
+    }
   };
 
   // Format currency
@@ -184,21 +142,20 @@ const ProductsByCategory = () => {
     ));
   };
 
-  // Product Card Component
-  const ProductCard = ({ product, isCompact = false }) => {
+  // Product Card Component (Same as your existing one)
+  const ProductCard = ({ product }) => {
     const inCart = isInCart(product._id);
     const cartQuantity = getCartItemQuantity(product._id);
     const isAddingThisProduct = addingToCart.has(product._id);
-    const inWishlist = isInWishlist(product._id);
-    const isAddingToWishlistThis = addingToWishlist.has(product._id);
+    const isRemovingThis = removingFromWishlist.has(product._id);
 
     return (
       <div
-        className={`rounded-lg shadow-lg overflow-hidden transition-transform hover:scale-105 ${isCompact ? 'h-auto' : 'h-full'}`}
+        className="rounded-lg shadow-lg overflow-hidden transition-transform hover:scale-105"
         style={{ backgroundColor: '#D0B49F' }}
       >
         {/* Product Image */}
-        <div className={`relative bg-white overflow-hidden ${isCompact ? 'h-32' : 'h-48'}`}>
+        <div className="relative bg-white overflow-hidden h-48">
           {product.image && product.image.length > 0 ? (
             <img
               src={product.image[0]?.url || product.image[0]}
@@ -211,24 +168,17 @@ const ProductsByCategory = () => {
             </div>
           )}
 
-          {/* Quick Actions */}
-          <div className="absolute top-2 right-2 flex flex-col gap-1">
+          {/* Remove from Wishlist Button */}
+          <div className="absolute top-2 right-2">
             <button
-              onClick={() => handleWishlistToggle(product._id)}
-              disabled={isAddingToWishlistThis || wishlistLoading}
-              className={`p-1.5 rounded-full shadow-lg transition-all duration-200 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed ${inWishlist
-                  ? 'bg-red-500 text-white'
-                  : 'bg-white hover:bg-gray-50'
-                }`}
+              onClick={() => handleRemoveFromWishlist(product._id)}
+              disabled={isRemovingThis}
+              className="p-1.5 rounded-full shadow-lg transition-all duration-200 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed bg-red-500 text-white"
             >
-              {isAddingToWishlistThis ? (
+              {isRemovingThis ? (
                 <RefreshCw size={14} className="animate-spin" />
               ) : (
-                <Heart
-                  size={14}
-                  className={inWishlist ? 'fill-current' : ''}
-                  style={{ color: inWishlist ? 'white' : '#A47551' }}
-                />
+                <X size={14} />
               )}
             </button>
           </div>
@@ -247,24 +197,17 @@ const ProductsByCategory = () => {
               In Cart ({cartQuantity})
             </div>
           )}
-
-          
         </div>
 
-        {/* Product Info - KEEP ALL YOUR EXISTING PRODUCT INFO JSX AS IS */}
-        <div className={`p-3 ${isCompact ? 'space-y-1' : 'space-y-2'}`}>
-          <h3
-            className={`font-semibold line-clamp-2 ${isCompact ? 'text-sm' : 'text-base'}`}
-            style={{ color: '#523A28' }}
-          >
+        {/* Product Info */}
+        <div className="p-3 space-y-2">
+          <h3 className="font-semibold line-clamp-2 text-base" style={{ color: '#523A28' }}>
             {product.name}
           </h3>
 
-          {!isCompact && (
-            <p className="text-sm line-clamp-2" style={{ color: '#A47551' }}>
-              {product.shortDescription}
-            </p>
-          )}
+          <p className="text-sm line-clamp-2" style={{ color: '#A47551' }}>
+            {product.shortDescription}
+          </p>
 
           {/* Rating */}
           {product.averageRating > 0 && (
@@ -281,7 +224,7 @@ const ProductsByCategory = () => {
           {/* Price */}
           <div className="flex items-center justify-between">
             <div>
-              <span className={`font-bold ${isCompact ? 'text-sm' : 'text-lg'}`} style={{ color: '#523A28' }}>
+              <span className="font-bold text-lg" style={{ color: '#523A28' }}>
                 {formatCurrency(product.price)}
               </span>
               {product.originalPrice && product.originalPrice > product.price && (
@@ -297,14 +240,13 @@ const ProductsByCategory = () => {
             </span>
           </div>
 
-          {/* KEEP ALL YOUR EXISTING ACTION BUTTONS JSX AS IS */}
+          {/* Action Buttons */}
           <div className="space-y-2">
             {!inCart ? (
-              // Add to Cart Button
               <button
                 onClick={() => openQuantityModal(product)}
                 disabled={product.stock === 0 || isAddingThisProduct || cartLoading}
-                className={`w-full font-medium rounded-lg transition-colors flex items-center justify-center gap-2 ${isCompact ? 'px-3 py-1.5 text-xs' : 'px-4 py-2 text-sm'} disabled:opacity-50 disabled:cursor-not-allowed`}
+                className="w-full font-medium rounded-lg transition-colors flex items-center justify-center gap-2 px-4 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{
                   backgroundColor: '#523A28',
                   color: '#E4D4C8'
@@ -312,37 +254,36 @@ const ProductsByCategory = () => {
               >
                 {isAddingThisProduct ? (
                   <>
-                    <RefreshCw size={isCompact ? 12 : 16} className="animate-spin" />
+                    <RefreshCw size={16} className="animate-spin" />
                     Adding...
                   </>
                 ) : product.stock === 0 ? (
                   'Out of Stock'
                 ) : (
                   <>
-                    <ShoppingCart size={isCompact ? 12 : 16} />
+                    <ShoppingCart size={16} />
                     Add to Cart
                   </>
                 )}
               </button>
             ) : (
-              // When item is in cart - show both Order and Remove buttons
               <div className="space-y-1">
                 <button
                   onClick={() => handleProceedToOrder(product._id)}
-                  className={`w-full font-medium rounded-lg transition-colors flex items-center justify-center gap-2 ${isCompact ? 'px-3 py-1.5 text-xs' : 'px-4 py-2 text-sm'}`}
+                  className="w-full font-medium rounded-lg transition-colors flex items-center justify-center gap-2 px-4 py-2 text-sm"
                   style={{
                     backgroundColor: '#2D5016',
                     color: '#E4D4C8'
                   }}
                 >
-                  <ShoppingBag size={isCompact ? 12 : 16} />
+                  <ShoppingBag size={16} />
                   Order Now
                 </button>
 
                 <button
                   onClick={() => handleRemoveFromCart(product._id)}
                   disabled={isAddingThisProduct || cartLoading}
-                  className={`w-full font-medium  rounded-lg transition-colors flex items-center justify-center gap-2 ${isCompact ? 'px-3 py-1 text-xs' : 'px-4 py-1.5 text-sm'} disabled:opacity-50 disabled:cursor-not-allowed`}
+                  className="w-full font-medium rounded-lg transition-colors flex items-center justify-center gap-2 px-4 py-1.5 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{
                     backgroundColor: '#c06767ff',
                     color: '#E4D4C8'
@@ -350,12 +291,12 @@ const ProductsByCategory = () => {
                 >
                   {isAddingThisProduct ? (
                     <>
-                      <RefreshCw size={isCompact ? 10 : 14} className="animate-spin" />
+                      <RefreshCw size={14} className="animate-spin" />
                       Removing...
                     </>
                   ) : (
                     <>
-                      <X size={isCompact ? 10 : 14} />
+                      <X size={14} />
                       Remove
                     </>
                   )}
@@ -367,87 +308,37 @@ const ProductsByCategory = () => {
       </div>
     );
   };
-  // Category Section Component
-  const CategorySection = ({ category, isExpanded }) => {
-    const categoryData = getCategoryProducts(category._id) || { products: [], totalProducts: 0 };
-    const productsArray = Array.isArray(categoryData.products) ? categoryData.products : [];
-    const displayProducts = isExpanded ? productsArray : productsArray.slice(0, 4);
-
-    return (
-      <div className="mb-12">
-        {/* Category Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <h2 className="text-2xl font-bold" style={{ color: '#523A28' }}>
-              {category.name}
-            </h2>
-            <span
-              className="px-3 py-1 rounded-full text-sm font-medium"
-              style={{ backgroundColor: '#A47551', color: 'white' }}
-            >
-              {categoryData.totalProducts} items
-            </span>
-          </div>
-
-
-        </div>
-
-        {/* Category Description */}
-        {category.description && (
-          <p className="mb-4 text-sm" style={{ color: '#A47551' }}>
-            {category.description}
-          </p>
-        )}
-
-
-
-        {/* Products Grid */}
-        {displayProducts.length > 0 ? (
-          <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {displayProducts.map((product) => (
-                <ProductCard key={product._id} product={product} isCompact={true} />
-              ))}
-            </div>
-
-            {/* Load More / Show Less */}
-            {categoryData.products.length > 4 && (
-              <div className="text-center mt-6">
-                <button
-                  onClick={() => toggleCategoryExpansion(category._id)}
-                  className="px-6 py-2 rounded-lg font-medium transition-colors"
-                  style={{ backgroundColor: '#A47551', color: 'white' }}
-                >
-                  {isExpanded ? 'Show Less' : `Show All ${categoryData.totalProducts} Products`}
-                </button>
-              </div>
-            )}
-          </>
-        ) : (
-          <div className="text-center py-12 rounded-lg" style={{ backgroundColor: '#D0B49F' }}>
-            <Package size={48} className="mx-auto mb-4" style={{ color: '#A47551' }} />
-            <p style={{ color: '#523A28' }}>No products found in this category</p>
-          </div>
-        )}
-      </div>
-    );
-  };
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#E4D4C8' }}>
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2" style={{ color: '#523A28' }}>
-            Products by Category
-          </h1>
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold mb-2" style={{ color: '#523A28' }}>
+              My Wishlist
+            </h1>
+            <p className="text-sm" style={{ color: '#A47551' }}>
+              {wishlist.length} {wishlist.length === 1 ? 'item' : 'items'} saved
+            </p>
+          </div>
 
+          {wishlist.length > 0 && (
+            <button
+              onClick={handleClearWishlist}
+              className="px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
+              style={{ backgroundColor: '#c06767ff', color: '#E4D4C8' }}
+            >
+              <Trash2 size={16} />
+              Clear All
+            </button>
+          )}
         </div>
 
         {/* Error Alerts */}
         {error && (
           <div className="mb-6 p-4 rounded-lg border border-red-300 bg-red-50 flex items-center gap-3">
-            <AlertCircle className="text-red-500 flex-shrink-0" size={20} />
+            <X className="text-red-500 flex-shrink-0" size={20} />
             <p className="text-red-700">{error}</p>
             <button
               onClick={clearError}
@@ -460,7 +351,7 @@ const ProductsByCategory = () => {
 
         {cartError && (
           <div className="mb-6 p-4 rounded-lg border border-red-300 bg-red-50 flex items-center gap-3">
-            <AlertCircle className="text-red-500 flex-shrink-0" size={20} />
+            <X className="text-red-500 flex-shrink-0" size={20} />
             <p className="text-red-700">Cart Error: {cartError}</p>
             <button
               onClick={clearCartError}
@@ -471,89 +362,51 @@ const ProductsByCategory = () => {
           </div>
         )}
 
-
-
-        {wishlistError && (
-          <div className="mb-6 p-4 rounded-lg border border-red-300 bg-red-50 flex items-center gap-3">
-            <AlertCircle className="text-red-500 flex-shrink-0" size={20} />
-            <p className="text-red-700">Wishlist Error: {wishlistError}</p>
-            <button
-              onClick={clearWishlistError}
-              className="ml-auto text-red-500 hover:text-red-700"
-            >
-              <X size={16} />
-            </button>
-          </div>
-        )}
-
         {/* Loading State */}
-        {(categoriesLoading || loading) && categories.length === 0 ? (
+        {loading ? (
           <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-2 border-b-transparent" style={{ borderColor: '#523A28' }}></div>
-            <span className="ml-3" style={{ color: '#523A28' }}>Loading categories...</span>
+            <div
+              className="animate-spin rounded-full h-8 w-8 border-2 border-b-transparent"
+              style={{ borderColor: '#523A28' }}
+            ></div>
+            <span className="ml-3" style={{ color: '#523A28' }}>
+              Loading wishlist...
+            </span>
           </div>
-        ) : categories.length === 0 ? (
+        ) : wishlist.length === 0 ? (
+          /* Empty Wishlist */
           <div className="text-center py-12">
-            <Package size={48} className="mx-auto mb-4" style={{ color: '#A47551' }} />
+            <Heart size={64} className="mx-auto mb-4" style={{ color: '#A47551' }} />
             <h3 className="text-xl font-medium mb-2" style={{ color: '#523A28' }}>
-              No categories found
+              Your wishlist is empty
             </h3>
-            <p className="mb-4" style={{ color: '#A47551' }}>
-              Categories will appear here once they are created.
+            <p className="mb-6" style={{ color: '#A47551' }}>
+              Start adding products you love to see them here
             </p>
-            <button
-              onClick={fetchCategories}
-              className="px-6 py-3 rounded-lg font-medium transition-colors"
+            <a
+              href="/products-categories"
+              className="inline-block px-6 py-3 rounded-lg font-medium transition-colors"
               style={{ backgroundColor: '#523A28', color: '#E4D4C8' }}
             >
-              Refresh
-            </button>
+              Browse Products
+            </a>
           </div>
         ) : (
-          /* Categories List */
-          <div>
-            {categories.map((category) => (
-              <CategorySection
-                key={category._id}
-                category={category}
-                isExpanded={expandedCategories.has(category._id)}
-              />
+          /* Wishlist Items */
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {wishlist.map((product) => (
+              <ProductCard key={product._id} product={product} />
             ))}
-          </div>
-        )}
-
-        {/* Category Quick Navigation */}
-        {categories.length > 0 && (
-          <div className="mt-12 p-6 rounded-lg shadow-lg" style={{ backgroundColor: '#D0B49F' }}>
-            <h3 className="text-lg font-semibold mb-4" style={{ color: '#523A28' }}>
-              Quick Navigation
-            </h3>
-            <div className="flex flex-wrap gap-2">
-              {categories.map((category) => (
-                <button
-                  key={category._id}
-                  onClick={() => handleCategorySelect(category._id)}
-                  className="px-4 py-2 rounded-full text-sm font-medium transition-colors border"
-                  style={{
-                    borderColor: '#A47551',
-                    color: '#523A28',
-                    backgroundColor: selectedCategory === category._id ? '#A47551' : 'transparent'
-                  }}
-                >
-                  {category.name}
-                  <span className="ml-2 text-xs">
-                    ({getCategoryProducts(category._id).totalProducts})
-                  </span>
-                </button>
-              ))}
-            </div>
           </div>
         )}
 
         {/* Quantity Selection Modal */}
         {showQuantityModal && selectedProduct && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 max-w-sm w-full mx-4" style={{ backgroundColor: '#E4D4C8' }}>
+            <div
+              className="bg-white rounded-lg p-6 max-w-sm w-full mx-4"
+              style={{ backgroundColor: '#E4D4C8' }}
+            >
               <h3 className="text-lg font-semibold mb-4" style={{ color: '#523A28' }}>
                 Select Quantity
               </h3>
@@ -575,7 +428,10 @@ const ProductsByCategory = () => {
                     -
                   </button>
 
-                  <span className="text-xl font-semibold w-12 text-center" style={{ color: '#523A28' }}>
+                  <span
+                    className="text-xl font-semibold w-12 text-center"
+                    style={{ color: '#523A28' }}
+                  >
                     {quantity}
                   </span>
 
@@ -623,4 +479,4 @@ const ProductsByCategory = () => {
   );
 };
 
-export default ProductsByCategory;
+export default Wishlist;
