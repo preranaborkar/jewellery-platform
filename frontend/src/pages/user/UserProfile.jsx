@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { User, Mail, Phone, MapPin, Heart, Shield, Edit3, Camera, Package, Settings, Check, X } from 'lucide-react';
-import { useGetProfileData, useUpdateProfile } from '../../hooks/useAuth';
+import { useGetProfileData, useUpdateProfile, useChangePassword } from '../../hooks/useAuth';
 
 const ProfilePage = () => {
     const { profileData, loading, error, fetchProfileData } = useGetProfileData();
@@ -19,6 +19,12 @@ const ProfilePage = () => {
         }
     });
 
+    const [showPasswordChange, setShowPasswordChange] = useState(false);
+    const [passwordForm, setPasswordForm] = useState({
+        currentPassword: '',
+        newPassword: ''
+    });
+    const { changePassword, loading: passwordLoading, error: passwordError, success: passwordSuccess, setError: setPasswordError } = useChangePassword();
     // Mock data for demonstration (replace with actual data from profileData)
     const userData = {
         firstName: profileData?.firstName || 'Sarah',
@@ -50,6 +56,17 @@ const ProfilePage = () => {
             }, 5000);
         }
     }, [success]);
+
+    // Add this useEffect to handle password change success
+    useEffect(() => {
+        if (passwordSuccess) {
+            // Hide the password change form after successful change
+            setTimeout(() => {
+                setShowPasswordChange(false);
+                setPasswordForm({ currentPassword: '', newPassword: '' });
+            }, 2000); // Hide after 2 seconds so user can see success message
+        }
+    }, [passwordSuccess]);
     // Initialize form data when editing starts
     const handleEditStart = () => {
         setFormData({
@@ -447,28 +464,93 @@ const ProfilePage = () => {
                                         <div className="bg-gray-50 rounded-xl p-6" style={{ backgroundColor: '#E4D4C8' }}>
                                             <h3 className="text-lg font-semibold mb-4" style={{ color: '#523A28' }}>Security Settings</h3>
                                             <div className="space-y-4">
-                                                <button className="w-full text-left px-4 py-3 bg-white rounded-lg hover:shadow-md transition-shadow">
-                                                    <div className="font-medium" style={{ color: '#523A28' }}>Change Password</div>
-                                                    <div className="text-sm text-gray-600">Update your account password</div>
-                                                </button>
-                                                <button className="w-full text-left px-4 py-3 bg-white rounded-lg hover:shadow-md transition-shadow">
-                                                    <div className="font-medium" style={{ color: '#523A28' }}>Two-Factor Authentication</div>
-                                                    <div className="text-sm text-gray-600">Add an extra layer of security</div>
-                                                </button>
-                                            </div>
-                                        </div>
+                                                <div className="bg-gray-50 rounded-xl p-6" style={{ backgroundColor: '#E4D4C8' }}>
+                                                    <h3 className="text-lg font-semibold mb-4" style={{ color: '#523A28' }}>Security Settings</h3>
+                                                    <div className="space-y-4">
+                                                        <div className="bg-white rounded-lg overflow-hidden">
+                                                            <button
+                                                                onClick={() => {
+                                                                    setShowPasswordChange(!showPasswordChange);
+                                                                    setPasswordError('');
+                                                                    setPasswordForm({ currentPassword: '', newPassword: '' });
+                                                                }}
+                                                                className="w-full text-left px-4 py-3 hover:shadow-md transition-shadow"
+                                                            >
+                                                                <div className="font-medium" style={{ color: '#523A28' }}>Change Password</div>
+                                                                <div className="text-sm text-gray-600">Update your account password</div>
+                                                            </button>
 
-                                        <div className="bg-gray-50 rounded-xl p-6" style={{ backgroundColor: '#E4D4C8' }}>
-                                            <h3 className="text-lg font-semibold mb-4" style={{ color: '#523A28' }}>Preferences</h3>
-                                            <div className="space-y-4">
-                                                <button className="w-full text-left px-4 py-3 bg-white rounded-lg hover:shadow-md transition-shadow">
-                                                    <div className="font-medium" style={{ color: '#523A28' }}>Email Notifications</div>
-                                                    <div className="text-sm text-gray-600">Manage your email preferences</div>
-                                                </button>
-                                                <button className="w-full text-left px-4 py-3 bg-white rounded-lg hover:shadow-md transition-shadow">
-                                                    <div className="font-medium" style={{ color: '#523A28' }}>Privacy Settings</div>
-                                                    <div className="text-sm text-gray-600">Control your privacy preferences</div>
-                                                </button>
+                                                            {showPasswordChange && (
+                                                                <div className="px-4 pb-4 border-t" style={{ borderColor: '#D0B49F' }}>
+                                                                    {passwordSuccess && (
+                                                                        <div className="flex items-center space-x-2 p-3 mb-4 bg-green-100 border border-green-300 rounded-lg">
+                                                                            <Check size={16} className="text-green-600" />
+                                                                            <span className="text-green-800 text-sm">Password changed successfully!</span>
+                                                                        </div>
+                                                                    )}
+
+                                                                    {passwordError && (
+                                                                        <div className="flex items-center space-x-2 p-3 mb-4 bg-red-100 border border-red-300 rounded-lg">
+                                                                            <X size={16} className="text-red-600" />
+                                                                            <span className="text-red-800 text-sm">{passwordError}</span>
+                                                                        </div>
+                                                                    )}
+
+                                                                    <div className="space-y-4 mt-4">
+                                                                        <div>
+                                                                            <label className="block text-sm font-medium mb-2" style={{ color: '#A47551' }}>Current Password</label>
+                                                                            <input
+                                                                                type="password"
+                                                                                value={passwordForm.currentPassword}
+                                                                                onChange={(e) => setPasswordForm(prev => ({ ...prev, currentPassword: e.target.value }))}
+                                                                                className="w-full px-3 py-2 border-2 rounded-lg focus:outline-none focus:ring-2"
+                                                                                style={{ borderColor: '#D0B49F', focusRingColor: '#A47551' }}
+                                                                                placeholder="Enter current password"
+                                                                            />
+                                                                        </div>
+                                                                        <div>
+                                                                            <label className="block text-sm font-medium mb-2" style={{ color: '#A47551' }}>New Password</label>
+                                                                            <input
+                                                                                type="password"
+                                                                                value={passwordForm.newPassword}
+                                                                                onChange={(e) => setPasswordForm(prev => ({ ...prev, newPassword: e.target.value }))}
+                                                                                className="w-full px-3 py-2 border-2 rounded-lg focus:outline-none focus:ring-2"
+                                                                                style={{ borderColor: '#D0B49F', focusRingColor: '#A47551' }}
+                                                                                placeholder="Enter new password"
+                                                                            />
+                                                                        </div>
+                                                                        <div className="flex space-x-3">
+                                                                            <button
+                                                                                onClick={() => {
+                                                                                    changePassword(passwordForm.currentPassword, passwordForm.newPassword);
+                                                                                }}
+                                                                                disabled={passwordLoading || !passwordForm.currentPassword || !passwordForm.newPassword}
+                                                                                className="px-4 py-2 rounded-lg font-medium text-white transition-colors hover:opacity-80 disabled:opacity-50"
+                                                                                style={{ backgroundColor: '#523A28' }}
+                                                                            >
+                                                                                {passwordLoading ? 'Changing...' : 'Change Password'}
+                                                                            </button>
+                                                                            <button
+                                                                                onClick={() => {
+                                                                                    setShowPasswordChange(false);
+                                                                                    setPasswordError('');
+                                                                                }}
+                                                                                className="px-4 py-2 border-2 rounded-lg font-medium transition-colors hover:opacity-80"
+                                                                                style={{ borderColor: '#D0B49F', color: '#A47551' }}
+                                                                            >
+                                                                                Cancel
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <button className="w-full text-left px-4 py-3 bg-white rounded-lg hover:shadow-md transition-shadow">
+                                                            <div className="font-medium" style={{ color: '#523A28' }}>Email Notifications</div>
+                                                            <div className="text-sm text-gray-600">Manage your email preferences</div>
+                                                        </button>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>

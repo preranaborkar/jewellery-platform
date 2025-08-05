@@ -384,7 +384,46 @@ async updateProfile(userId, profileData) {
     }
 }
 
+// Add this method to your AuthService class
+async changePassword(currentPassword, newPassword) {
+    try {
+        const response = await fetch('/api/auth/change-password', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify({
+                currentPassword,
+                newPassword
+            })
+        });
 
+        const data = await response.json();
+        console.log('Change password response:', data);
+
+        if (!response.ok) {
+            throw {
+                status: response.status,
+                data: data
+            };
+        }
+
+        return {
+            success: true,
+            data: data
+        };
+    } catch (error) {
+        if (error.status) {
+            throw error;
+        } else {
+            throw {
+                status: 0,
+                data: { message: 'Network error. Please try again.' }
+            };
+        }
+    }
+}
     // Function to handle register-specific error responses
     getRegisterErrorMessage(status, data) {
         switch (status) {

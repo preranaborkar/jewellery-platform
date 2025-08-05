@@ -670,3 +670,40 @@ export const useResetPassword = () => {
         toggleConfirmPasswordVisibility
     };
 };
+
+
+// Add this hook to useAuth.js
+export const useChangePassword = () => {
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [success, setSuccess] = useState(false);
+
+    const changePassword = async (currentPassword, newPassword) => {
+        setLoading(true);
+        setError('');
+        setSuccess(false);
+
+        try {
+            const result = await authService.changePassword(currentPassword, newPassword);
+            
+            if (result.success) {
+                setSuccess(true);
+                setTimeout(() => setSuccess(false), 3000);
+            }
+        } catch (err) {
+            console.error('Change password error:', err);
+            const errorMessage = authService.getErrorMessage(err.status, err.data);
+            setError(errorMessage);
+        }
+
+        setLoading(false);
+    };
+
+    return {
+        changePassword,
+        loading,
+        error,
+        success,
+        setError
+    };
+};

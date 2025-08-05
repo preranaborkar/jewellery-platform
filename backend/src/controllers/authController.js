@@ -555,11 +555,13 @@ const changePassword = async (req, res) => {
     }
 
     const { currentPassword, newPassword } = req.body;
-    const userId = req.user.userId;
+    const userId = req.user.id;
 
     // Find user and include password
     const user = await User.findById(userId).select('+password');
-
+   
+    console.log('User found:', user ? 'Yes' : 'No');
+    console.log('User ID:', userId);
     if (!user) {
       return res.status(404).json({
         success: false,
