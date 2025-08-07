@@ -58,26 +58,14 @@ const validateUpdateCartItem = [
         .toInt()
 ];
 
-// Rate limiting middleware for cart operations
-const rateLimit = require('express-rate-limit');
 
-const cartRateLimit = rateLimit({
-    windowMs: 1 * 60 * 1000, // 1 minute
-    max: 20, // Limit each user to 20 requests per windowMs
-    message: {
-        success: false,
-        message: 'Too many cart operations, please try again later'
-    },
-    standardHeaders: true,
-    legacyHeaders: false,
-    keyGenerator: (req) => req.user?.id || req.ip
-});
+
+
 
 // Apply authentication middleware to all routes
 router.use(protect);
 
-// Apply rate limiting to cart operations
-router.use(cartRateLimit);
+
 
 
 router.post('/add', validateAddToCart, addToCart);

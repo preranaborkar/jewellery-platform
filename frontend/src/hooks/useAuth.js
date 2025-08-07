@@ -9,13 +9,13 @@ export const useLogin = () => {
     const [form, setForm] = useState({
         email: '',
         password: '',
-       
+
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [validationErrors, setValidationErrors] = useState({});
-    
+
     const navigate = useNavigate();
     const location = useLocation();
     const { login } = useAuth();
@@ -53,10 +53,10 @@ export const useLogin = () => {
 
         try {
             const result = await authService.login(form);
-            
+
             if (result.success) {
                 const userData = login(result.data, result.data.token);
-                
+
                 // Handle role-based routing here
                 if (userData.role === 'admin') {
                     navigate('/admindashboard');
@@ -111,7 +111,7 @@ export const useRegister = () => {
     const [error, setError] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [validationErrors, setValidationErrors] = useState({});
-    
+
     const navigate = useNavigate();
     const location = useLocation();
     const { handleRegistrationSuccess } = useAuth();
@@ -144,17 +144,17 @@ export const useRegister = () => {
 
     const validateForm = () => {
         const errors = {};
-        
+
         // First name validation
         if (!form.firstName.trim()) {
             errors.firstName = 'First name is required';
         }
-        
+
         // Last name validation
         if (!form.lastName.trim()) {
             errors.lastName = 'Last name is required';
         }
-        
+
         // Email validation
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!form.email.trim()) {
@@ -162,7 +162,7 @@ export const useRegister = () => {
         } else if (!emailRegex.test(form.email)) {
             errors.email = 'Please enter a valid email address';
         }
-        
+
         // Password validation
         const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{6,}$/;
         if (!form.password) {
@@ -170,7 +170,7 @@ export const useRegister = () => {
         } else if (!passwordRegex.test(form.password)) {
             errors.password = 'Password must contain uppercase, lowercase, number and be 6+ characters';
         }
-        
+
         // Phone validation (optional, but if provided should be valid)
         if (form.phone && form.phone.trim()) {
             const phoneRegex = /^\+?[\d\s\-\(\)]{10,}$/;
@@ -178,7 +178,7 @@ export const useRegister = () => {
                 errors.phone = 'Please enter a valid phone number';
             }
         }
-        
+
         setValidationErrors(errors);
         return Object.keys(errors).length === 0;
     };
@@ -196,20 +196,20 @@ export const useRegister = () => {
 
         try {
             const result = await authService.register(form);
-            
+
             if (result.success) {
                 // Handle successful registration
                 const userData = handleRegistrationSuccess(result.data);
-                
+
                 // Show success message
                 alert('Registration successful! Please check your email for OTP verification.');
-                
+
                 // Navigate to OTP verification page
-                navigate('/verify-otp', { 
-                    state: { 
+                navigate('/verify-otp', {
+                    state: {
                         email: form.email,
-                        message: userData.message 
-                    } 
+                        message: userData.message
+                    }
                 });
             }
         } catch (err) {
@@ -255,7 +255,7 @@ export const useVerifyOTP = () => {
     const [resendLoading, setResendLoading] = useState(false);
     const [resendCooldown, setResendCooldown] = useState(0);
     const [email, setEmail] = useState('');
-    
+
     const navigate = useNavigate();
     const location = useLocation();
     const { completeRegistration } = useAuth();
@@ -304,7 +304,7 @@ export const useVerifyOTP = () => {
 
         try {
             const result = await authService.verifyOTP(email, otpString);
-            
+
             if (result.success) {
                 localStorage.removeItem('verificationEmail');
                 alert('Email verified successfully! Welcome to SváRIN!');
@@ -327,7 +327,7 @@ export const useVerifyOTP = () => {
 
         try {
             const result = await authService.resendOTP(email);
-            
+
             if (result.success) {
                 alert('New OTP sent to your email!');
                 setOtp(['', '', '', '', '', '']);
@@ -373,7 +373,7 @@ export const useForgotPassword = () => {
     const [email, setEmail] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    
+
     const navigate = useNavigate();
     const { setPasswordResetToken } = useAuth();
 
@@ -384,19 +384,19 @@ export const useForgotPassword = () => {
 
         try {
             const result = await authService.forgotPassword(email);
-            
+
             if (result.success) {
                 // Store reset token in context
                 if (result.data.data?.resetToken) {
                     setPasswordResetToken(result.data.data?.resetToken);
                 }
-                
+
                 // Navigate to reset password page
-                navigate('/reset-password', { 
-                    state: { 
+                navigate('/reset-password', {
+                    state: {
                         email,
-                        resetToken: result.data.data?.resetToken 
-                    } 
+                        resetToken: result.data.data?.resetToken
+                    }
                 });
             }
         } catch (err) {
@@ -457,8 +457,10 @@ export const useGetProfileData = () => {
 
     };
 
+
     useEffect(() => {
-        if (user && user.userId) {
+        const token = localStorage.getItem('token');
+        if (user && user.userId && token) {
             fetchProfileData();
         }
     }, [user]);
@@ -491,7 +493,7 @@ export const useUpdateProfile = () => {
 
         try {
             const response = await authService.updateProfile(user.userId, profileData);
-            
+
             if (response.success) {
                 // Update user context with new data
                 updateUser(response.data);
@@ -502,7 +504,7 @@ export const useUpdateProfile = () => {
             console.error('Error updating profile:', err);
             const errorMessage = authService.getErrorMessage(err.status, err.data || {});
             setError(errorMessage);
-            
+
             if (err.status === 401) {
                 navigate('/login');
             }
@@ -532,7 +534,7 @@ export const useResetPassword = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [resetToken, setResetToken] = useState('');
-    
+
     const navigate = useNavigate();
     const location = useLocation();
     const { clearResetToken } = useAuth();
@@ -541,7 +543,7 @@ export const useResetPassword = () => {
         const urlParams = new URLSearchParams(window.location.search);
         const tokenFromUrl = urlParams.get('token');
         const tokenFromState = location.state?.resetToken;
-        
+
         console.log('Reset Password - Token from URL:', tokenFromUrl);
         console.log('Reset Password - Token from State:', tokenFromState);
         console.log('Reset Password - Location State:', location.state);
@@ -619,11 +621,11 @@ export const useResetPassword = () => {
 
         try {
             const result = await authService.resetPassword(resetToken, form.otp, form.newPassword);
-            
+
             if (result.success) {
                 setSuccess(true);
                 clearResetToken();
-                
+
                 setTimeout(() => {
                     navigate('/login');
                 }, 3000);
@@ -664,7 +666,7 @@ export const useResetPassword = () => {
         handleChange,
         validateForm,
         handleSubmit,
-        navigateToForgotPassword,  
+        navigateToForgotPassword,
         navigateToLogin,
         togglePasswordVisibility,
         toggleConfirmPasswordVisibility
@@ -685,7 +687,7 @@ export const useChangePassword = () => {
 
         try {
             const result = await authService.changePassword(currentPassword, newPassword);
-            
+
             if (result.success) {
                 setSuccess(true);
                 setTimeout(() => setSuccess(false), 3000);

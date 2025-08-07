@@ -120,10 +120,25 @@ export const useWishlist = () => {
     return itemCount;
   }, [itemCount]);
 
-  // Initialize wishlist on mount
-  useEffect(() => {
-    fetchWishlist();
-  }, [fetchWishlist]);
+  // ✅ ADD AUTHENTICATION CHECK
+useEffect(() => {
+  const token = localStorage.getItem('token');
+  const customer = localStorage.getItem('customer');
+  
+  if (token && customer) {
+    try {
+      const user = JSON.parse(customer);
+      if (user && user.userId) {
+        fetchWishlist();
+      }
+    } catch (error) {
+      console.error('Invalid user data');
+      localStorage.removeItem('customer');
+      localStorage.removeItem('token');
+    }
+  }
+}, [fetchWishlist]);
+
 
   return {
     // State

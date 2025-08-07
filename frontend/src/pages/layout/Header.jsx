@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useGetProfileData } from '../../hooks/useAuth';
 import useWishlist from '../../hooks/useWishList';
+// Removed invalid import of backend Order model
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -25,12 +26,16 @@ const Header = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [showSearchResults, setShowSearchResults] = useState(false);
 
-  const { user, logout, isAdmin } = useAuth();
+  const { user, logout, isAdmin, isAuthenticated } = useAuth();
+  
+  // 🔥 FIX: Always call hooks, but handle the data conditionally
   const { cartItems, cartCount } = useCart();
+  const { profileData } = useGetProfileData();
+  const { itemCount } = useWishlist();
+  
   const navigate = useNavigate();
   const location = useLocation();
-  const { profileData } = useGetProfileData();
- const { itemCount } = useWishlist();
+
   // Updated admin page detection - include all your admin routes
   const adminRoutes = [
     '/admindashboard',
@@ -58,7 +63,19 @@ const Header = () => {
     setIsSearching(true);
     const debounceTimer = setTimeout(async () => {
       try {
-        const response = await fetch(`/api/products/search?q=${encodeURIComponent(searchQuery.trim())}&limit=5`);
+        // 🔥 FIX: Add authentication headers if needed
+        const headers = {};
+        if (isAuthenticated) {
+          const token = localStorage.getItem('token');
+          if (token) {
+            headers.Authorization = `Bearer ${token}`;
+          }
+        }
+
+        const response = await fetch(
+          `/api/products/search?q=${encodeURIComponent(searchQuery.trim())}&limit=5`,
+          { headers }
+        );
         const data = await response.json();
 
         if (data.success) {
@@ -74,7 +91,7 @@ const Header = () => {
     }, 4000); // 4 second delay
 
     return () => clearTimeout(debounceTimer);
-  }, [searchQuery]);
+  }, [searchQuery, isAuthenticated]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -239,8 +256,19 @@ const Header = () => {
               </Link>
             )}
 
+             {/* Wishlist (Hide on admin pages) */}
+            {isAuthenticated && (
+              <Link
+                to="/my-orders"
+                className="relative p-2 text-[#523A28] hover:text-[#A47551] transition-colors duration-300 hover:bg-[#E4D4C8] rounded-full"
+              > 
+                <Package className="h-5 w-5" />
+                
+              </Link>
+            )}
+
             {/* Wishlist (Hide on admin pages) */}
-            {user && !shouldShowAdminNav && (
+            {isAuthenticated && (
               <Link
                 to="/wishlist"
                 className="relative p-2 text-[#523A28] hover:text-[#A47551] transition-colors duration-300 hover:bg-[#E4D4C8] rounded-full"
@@ -254,9 +282,8 @@ const Header = () => {
               </Link>
             )}
 
-
             {/* Cart (Hide on admin pages) */}
-            {!shouldShowAdminNav && (
+            {isAuthenticated && (
               <Link
                 to="/cart"
                 className="relative p-2 text-[#523A28] hover:text-[#A47551] transition-colors duration-300 hover:bg-[#E4D4C8] rounded-full"
@@ -280,11 +307,13 @@ const Header = () => {
                   {/* User Profile Picture */}
                   <div className="w-8 h-8 bg-[#A47551] rounded-full flex items-center justify-center">
                     <span className="text-white font-medium text-sm">
-                      {profileData.fullName?.charAt(0)?.toUpperCase() || profileData.firstName?.charAt(0)?.toUpperCase() || 'U'}
+                      {profileData?.fullName?.charAt(0)?.toUpperCase() || 
+                       profileData?.firstName?.charAt(0)?.toUpperCase() || 
+                       user?.fullName?.charAt(0)?.toUpperCase() || 'U'}
                     </span>
                   </div>
                   <span className="hidden md:block text-sm font-medium">
-                    {profileData.fullName || profileData.firstName || 'User'}
+                    {profileData?.fullName || profileData?.firstName || user?.fullName || 'User'}
                   </span>
                 </button>
 
@@ -293,33 +322,23 @@ const Header = () => {
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-[#D0B49F]/20 py-2 z-50">
                     <div className="px-4 py-2 border-b border-[#D0B49F]/20">
                       <p className="text-sm font-medium text-[#523A28]">
-                        {profileData.fullName
-                          ? profileData.fullName
-                          : (profileData.firstName && profileData.lastName)
-                            ? `${profileData.firstName} ${profileData.lastName}`
-                            : 'User'}
+                        {profileData?.fullName ||
+                          (profileData?.firstName && profileData?.lastName ? 
+                            `${profileData.firstName} ${profileData.lastName}` : 
+                            user?.fullName || 'User')}
                       </p>
-
                       <p className="text-xs text-[#A47551]">{user.email}</p>
                       {isAdmin() && <span className="text-xs text-[#A47551] bg-[#E4D4C8] px-2 py-1 rounded-full mt-1 inline-block">Admin</span>}
                     </div>
 
-                    
-                      <>
-                        <Link
-                          to="/profile"
-                          className="flex items-center space-x-2 px-4 py-2 text-[#523A28] hover:bg-[#E4D4C8] transition-colors duration-200"
-                          onClick={() => setIsUserMenuOpen(false)}
-                        >
-                          <Settings className="h-4 w-4" />
-                          <span>Profile</span>
-                        </Link>
-
-
-                      </>
-                    
-
-                   
+                    <Link
+                      to="/profile"
+                      className="flex items-center space-x-2 px-4 py-2 text-[#523A28] hover:bg-[#E4D4C8] transition-colors duration-200"
+                      onClick={() => setIsUserMenuOpen(false)}
+                    >
+                      <Settings className="h-4 w-4" />
+                      <span>Profile</span>
+                    </Link>
 
                     <button
                       onClick={handleLogout}

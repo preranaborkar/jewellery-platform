@@ -28,6 +28,8 @@ import Cart from './pages/user/Cart';
 import SearchResults from './pages/user/SearchResult';
 import ProfilePage from './pages/user/UserProfile';
 import WishList from './pages/user/WishList';
+import OrderCancelled from './pages/user/OrderCancle';
+import OrderSuccess from './pages/user/OrderSuccess';
 // Styles
 import './styles/globals.css';
 
@@ -59,7 +61,7 @@ function App() {
                       <ProtectedRoute>
                         <Dashboard />
                       </ProtectedRoute>
-                    } /> /search-results
+                    } /> 
 
                     <Route path="/search-results" element={
                       <ProtectedRoute>
@@ -84,6 +86,23 @@ function App() {
                         <ProfilePage />
                       </ProtectedRoute>
                     } /> 
+
+                   
+
+                     <Route path="/order-success" element={
+                      <ProtectedRoute>
+                        <OrderSuccess />
+                      </ProtectedRoute>
+                    } /> 
+
+                    
+                     <Route path="/order-cancelled" element={
+                      <ProtectedRoute>
+                        <OrderCancelled />
+                      </ProtectedRoute>
+                    } /> 
+
+
                     {/* Admin Only Routes */}
                     <Route path="/admindashboard" element={
                       <ProtectedRoute adminOnly={true}>

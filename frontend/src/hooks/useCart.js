@@ -45,12 +45,17 @@ export const CartProvider = ({ children }) => {
       console.log('Cart state updated with items:', items); // Debug log
     } catch (err) {
       console.error('Error in fetchCart:', err); // Debug log
+      if (err.status === 401 || err.message.includes('401')) {
+        // Clear invalid auth data
+        localStorage.removeItem('customer');
+        localStorage.removeItem('token');
+        setCart(null);
+        setCartItems([]);
+        setCartCount(0);
+        setCartTotal(0);
+        return; // Don't set error for 401
+      }
       setError(err.message);
-      // Set empty state on error
-      setCart(null);
-      setCartItems([]);
-      setCartCount(0);
-      setCartTotal(0);
     } finally {
       setLoading(false);
     }
@@ -163,11 +168,23 @@ export const CartProvider = ({ children }) => {
     setError(null);
   }, []);
 
-  // Initialize cart on mount
+  // ✅ ADD AUTHENTICATION CHECK
   useEffect(() => {
     const token = localStorage.getItem('token');
-    if (token) {
-      fetchCart();
+    const customer = localStorage.getItem('customer');
+
+    if (token && customer) {
+      try {
+        const user = JSON.parse(customer);
+        if (user && user.userId) { // Only fetch if user data is valid
+          fetchCart();
+        }
+      } catch (error) {
+        console.error('Invalid user data in localStorage');
+        // Clear invalid data
+        localStorage.removeItem('customer');
+        localStorage.removeItem('token');
+      }
     }
   }, [fetchCart]);
 

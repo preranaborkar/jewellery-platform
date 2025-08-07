@@ -18,6 +18,7 @@ import {
   CheckCircle
 } from 'lucide-react';
 import { useCart } from '../../hooks/useCart';
+import {loadStripe} from '@stripe/stripe-js';
 
 const CartPage = () => {
   const navigate = useNavigate();
@@ -42,6 +43,7 @@ const CartPage = () => {
   // Fetch cart on component mount
   useEffect(() => {
     fetchCart();
+    console.log('Cart fetched:#####',cartItems);
   }, [fetchCart]);
 
   // Handle quantity update
@@ -99,10 +101,64 @@ const CartPage = () => {
     navigate('/products-categories');
   };
 
-  const handleProceedToCheckout = () => {
-    // You can replace this with your actual checkout route
-    navigate('/checkout');
-  };
+  
+
+// Fixed handleProceedToCheckout function for CartPage.js
+// Fixed handleProceedToCheckout function for CartPage.js
+const handleProceedToCheckout = async () => {
+  try {
+    const stripe = await loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
+    
+    if (!stripe) {
+      console.error('Failed to load Stripe');
+      return;
+    }
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.error('No authentication token found');
+      navigate('/login');
+      return;
+    }
+
+    const headers = {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`
+    };
+
+    // ONLY create Stripe checkout session with cart items
+    console.log('Creating Stripe checkout with cart items:', cartItems);
+    
+    const checkoutResponse = await fetch(`${process.env.REACT_APP_API_URL}/orders/create-stripe-checkout`, {
+      method: 'POST',
+      headers: headers,
+      body: JSON.stringify({ 
+        items: cartItems // Send cart items directly
+      })
+    });
+
+    if (!checkoutResponse.ok) {
+      throw new Error('Failed to create checkout session');
+    }
+
+    const checkoutResult = await checkoutResponse.json();
+    console.log('Checkout session created:', checkoutResult);
+
+    // Redirect to Stripe checkout
+    if (checkoutResult.id) {
+      const result = await stripe.redirectToCheckout({ 
+        sessionId: checkoutResult.id 
+      });
+      if (result.error) {
+        console.error('Stripe checkout error:', result.error.message);
+      }
+    }
+
+  } catch (error) {
+    console.error('Checkout process failed:', error);
+    // Show error to user
+  }
+};
 
   const handleGoBack = () => {
     navigate(-1); // Go back to previous page

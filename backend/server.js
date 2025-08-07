@@ -56,11 +56,6 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 
-// Make io accessible to our router
-app.use((req, res, next) => {
-  req.io = io;
-  next();
-});
 
 
 // Error handling middleware for multer
@@ -138,6 +133,10 @@ app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/orders', orderRoutes);
 
 
+app.get('/ping', (req, res) => {
+  res.send('pong');
+});
+
 // 404 handler
 app.use('*', (req, res) => {
     res.status(404).json({
@@ -155,6 +154,8 @@ io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
   socketHandlers(socket, io);
 });
+
+
 
 const PORT = process.env.PORT || 5000;
 
