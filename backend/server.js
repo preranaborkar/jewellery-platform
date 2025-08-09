@@ -16,8 +16,8 @@ const adminProductRoutes = require('./src/routes/adminProductRoutes');
 const cartRoutes = require('./src/routes/cartRoutes');
 const wishlistRoutes= require('./src/routes/wishlistRoutes');
 const orderRoutes = require('./src/routes/orderRoutes');
-// const userRoutes = require('./src/routes/userRoutes');
-// const reviewRoutes = require('./src/routes/reviewRoutes');
+const reviewRoutes = require('./src/routes/reviewRoutes'); 
+const adminOrderRoutes = require('./src/routes/adminOrderRoutes'); // Admin order routes
 
 // Import middleware
 const errorHandler = require('./src/middleware/errorHandler');
@@ -131,7 +131,8 @@ app.use('/api/admin/products', adminProductRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/orders', orderRoutes);
-
+app.use('/api/reviews', reviewRoutes);
+app.use('/api/admin/orders',adminOrderRoutes )
 
 app.get('/ping', (req, res) => {
   res.send('pong');

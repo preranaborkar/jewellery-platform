@@ -1,463 +1,231 @@
-// controllers/orderController.js
+// backend/src/routes/orderRoutes.js
+const express = require('express');
 const Order = require('../models/Order');
-const Cart = require('../models/Cart');
+const Review = require('../models/Review');
 const Product = require('../models/Product');
-const mongoose = require('mongoose');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const User = require('../models/User');
 
-// Generate unique order number
-const generateOrderNumber = () => {
-  const timestamp = Date.now().toString();
-  const random = Math.random().toString(36).substring(2, 8).toUpperCase();
-  return `ORD${timestamp}${random}`;
-};
-
-// Create order from cart
-exports.createOrderFromCart = async (req, res) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
+// Get user's orders
+const getMyOrders = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const { billingAddress, paymentMethod = 'stripe' } = req.body;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
 
-    // Validate billing address
-    if (!billingAddress || !billingAddress.street || !billingAddress.city || 
-        !billingAddress.state || !billingAddress.zipCode || !billingAddress.country) {
-      return res.status(400).json({
-        success: false,
-        message: 'Complete billing address is required'
-      });
-    }
-
-    console.log('Creating order for user:', userId);
-
-    // Get user's cart
-    const cart = await Cart.findOne({ user: userId }).populate('items.product');
-    
-    if (!cart || !cart.items || cart.items.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Cart is empty'
-      });
-    }
-
-    // Validate stock availability and calculate totals
-    let subtotal = 0;
-    const orderProducts = [];
-
-    for (const item of cart.items) {
-      const product = item.product;
-      
-      if (!product) {
-        throw new Error(`Product not found for cart item`);
-      }
-
-      if (product.stock < item.quantity) {
-        throw new Error(`Insufficient stock for ${product.name}. Available: ${product.stock}, Requested: ${item.quantity}`);
-      }
-
-      const itemTotal = product.price * item.quantity;
-      subtotal += itemTotal;
-
-      orderProducts.push({
-        product: product._id,
-        quantity: item.quantity,
-        price: product.price
-      });
-
-      // Update product stock (will be committed only if entire transaction succeeds)
-      await Product.findByIdAndUpdate(
-        product._id, 
-        { $inc: { stock: -item.quantity } },
-        { session }
-      );
-    }
-
-    // Calculate tax (you can customize this logic)
-    const tax = Math.round(subtotal * 0.18 * 100) / 100; // 18% GST
-    
-    // Free shipping for now
-    const shipping = 0;
-    
-    const totalAmount = subtotal + tax + shipping;
-
-    // Create order
-    const orderData = {
-      user: userId,
-      orderNumber: generateOrderNumber(),
-      products: orderProducts,
-      subtotal: Math.round(subtotal * 100) / 100,
-      tax: tax,
-      shipping: shipping,
-      totalAmount: Math.round(totalAmount * 100) / 100,
-      billingAddress: billingAddress,
-      paymentMethod: paymentMethod,
-      paymentStatus: paymentMethod === 'cod' ? 'pending' : 'pending',
-      orderStatus: paymentMethod === 'cod' ? 'confirmed' : 'pending'
-    };
-
-    const order = new Order(orderData);
-    await order.save({ session });
-
-    // If payment method is COD, clear cart immediately
-    if (paymentMethod === 'cod') {
-      await Cart.findOneAndUpdate(
-        { user: userId },
-        { $set: { items: [] } },
-        { session }
-      );
-    }
-
-    await session.commitTransaction();
-
-    // Populate order for response
-    const populatedOrder = await Order.findById(order._id).populate('products.product');
-
-    res.status(201).json({
-      success: true,
-      message: 'Order created successfully',
-      data: {
-        order: populatedOrder
-      }
-    });
-
-  } catch (error) {
-    await session.abortTransaction();
-    console.error('Create order error:', error);
-
-    res.status(400).json({
-      success: false,
-      message: error.message || 'Failed to create order'
-    });
-  } finally {
-    session.endSession();
-  }
-};
-
-// Create Stripe Checkout Session
-exports.createStripeCheckout = async (req, res) => {
-  try {
-    const userId = req.user.userId;
-    const { orderId } = req.body;
-
-    console.log('Creating Stripe checkout for order:', orderId, 'for user:', userId);
-
-
-    // Get the order
-    const order = await Order.findOne({ _id: orderId, user: userId }).populate('products.product');
-
-    console.log('Order details:', order);
-    
-    if (!order) {
-      return res.status(404).json({
-        success: false,
-        message: 'Order not found'
-      });
-    }
-
-    // Create line items for Stripe
-    const lineItems = order.products.map(item => ({
-      price_data: {
-        currency: 'inr',
-        product_data: {
-          name: item.product.name,
-          description: item.product.description || '',
-          images: item.product.image && item.product.image.length > 0 ? 
-            [item.product.image[0]?.url || item.product.image[0]] : []
-        },
-        unit_amount: Math.round(item.price * 100), // Convert to paise/cents
-      },
-      quantity: item.quantity,
-    }));
-
-    // Add tax as a separate line item if applicable
-    if (order.tax > 0) {
-      lineItems.push({
-        price_data: {
-          currency: 'inr',
-          product_data: {
-            name: 'Tax (GST)',
-            description: '18% GST'
-          },
-          unit_amount: Math.round(order.tax * 100),
-        },
-        quantity: 1,
-      });
-    }
-
-    // Create Stripe checkout session
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      line_items: lineItems,
-      mode: 'payment',
-      success_url: `${process.env.FRONTEND_URL}/order-success?session_id={CHECKOUT_SESSION_ID}&order_id=${order._id}`,
-      cancel_url: `${process.env.FRONTEND_URL}/order-cancelled?order_id=${order._id}`,
-      metadata: {
-        orderId: order._id.toString(),
-        userId: userId,
-        orderNumber: order.orderNumber
-      },
-      
-      billing_address_collection: 'required',
-      shipping_address_collection: {
-        allowed_countries: ['IN'] // Adjust based on your shipping countries
-      }
-    });
-
-    // Update order with Stripe session ID
-    order.stripeSessionId = session.id;
-    await order.save();
-
-    res.json({
-      success: true,
-      message: 'Checkout session created successfully',
-      data: {
-        sessionId: session.id,
-        sessionUrl: session.url
-      }
-    });
-
-  } catch (error) {
-    console.error('Stripe checkout creation error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to create checkout session'
-    });
-  }
-};
-
-// Verify Stripe payment
-exports.verifyStripePayment = async (req, res) => {
-  try {
-    const { sessionId } = req.body;
-
-    // Retrieve the session from Stripe
-    const session = await stripe.checkout.sessions.retrieve(sessionId);
-
-    if (!session) {
-      return res.status(404).json({
-        success: false,
-        message: 'Session not found'
-      });
-    }
-
-    // Get the order from metadata
-    const orderId = session.metadata.orderId;
-    const order = await Order.findById(orderId).populate('products.product');
-
-    if (!order) {
-      return res.status(404).json({
-        success: false,
-        message: 'Order not found'
-      });
-    }
-
-    // Check payment status
-    if (session.payment_status === 'paid') {
-      // Payment successful
-      order.paymentStatus = 'completed';
-      order.orderStatus = 'confirmed';
-      order.stripePaymentIntentId = session.payment_intent;
-      order.paymentVerifiedAt = new Date();
-
-      await order.save();
-
-      // Clear the user's cart
-      await Cart.findOneAndUpdate(
-        { user: order.user },
-        { $set: { items: [] } }
-      );
-
-      res.json({
-        success: true,
-        message: 'Payment verified successfully',
-        data: { order }
-      });
-    } else {
-      // Payment failed or pending
-      order.paymentStatus = 'failed';
-      await order.save();
-
-      res.status(400).json({
-        success: false,
-        message: 'Payment verification failed'
-      });
-    }
-  } catch (error) {
-    console.error('Payment verification error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Payment verification failed'
-    });
-  }
-};
-
-// Get user orders
-exports.getUserOrders = async (req, res) => {
-  try {
-    const userId = req.user.userId;
-    const { page = 1, limit = 10, status } = req.query;
-
-    const filter = { user: userId };
-    if (status) {
-      filter.orderStatus = status;
-    }
-
-    const orders = await Order.find(filter)
-      .populate('products.product')
+    // Get orders with basic product info
+    const orders = await Order.find({ user: userId })
+      .populate({
+        path: 'products.product',
+        select: 'name image price'
+      })
       .sort({ createdAt: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
+      .skip(skip)
+      .limit(limit);
 
-    const total = await Order.countDocuments(filter);
+    const totalOrders = await Order.countDocuments({ user: userId });
 
     res.json({
       success: true,
-      data: {
-        orders,
-        totalPages: Math.ceil(total / limit),
+      data: orders,
+      pagination: {
         currentPage: page,
-        total
+        totalPages: Math.ceil(totalOrders / limit),
+        totalOrders,
+        hasNext: page < Math.ceil(totalOrders / limit),
+        hasPrev: page > 1
       }
     });
 
   } catch (error) {
-    console.error('Get orders error:', error);
+    console.error('Error in getMyOrders:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to fetch orders'
+      message: 'Internal server error',
+      error: error.message
     });
   }
 };
 
-// Get single order
-exports.getOrderById = async (req, res) => {
+// Get single order details
+const getOrderDetails = async (req, res) => {
   try {
+    
     const { orderId } = req.params;
     const userId = req.user.userId;
 
     const order = await Order.findOne({ _id: orderId, user: userId })
-      .populate('products.product');
+      .populate({
+        path: 'products.product',
+        select: 'name image price description metalType metalPurity'
+      })
+      .populate('user', 'fullName email firstName lastName');
 
     if (!order) {
       return res.status(404).json({
         success: false,
-        message: 'Order not found'
+        message: 'Order not found or unauthorized'
       });
     }
 
     res.json({
       success: true,
-      data: { order }
+      data: order
     });
 
   } catch (error) {
-    console.error('Get order error:', error);
+    console.error('Error in getOrderDetails:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to fetch order'
+      message: 'Internal server error',
+      error: error.message
     });
   }
 };
 
-// Cancel order (only if pending)
-exports.cancelOrder = async (req, res) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
+// Track order status
+const trackOrder = async (req, res) => {
   try {
     const { orderId } = req.params;
-    const userId = req.user.userId;
+    const userId = req.user.id;
 
-    const order = await Order.findOne({ _id: orderId, user: userId }).populate('products.product');
+    const order = await Order.findOne({ _id: orderId, user: userId })
+      .select('orderNumber orderStatus paymentStatus trackingNumber estimatedDelivery createdAt updatedAt')
+      .populate('user', 'fullName email');
 
     if (!order) {
       return res.status(404).json({
         success: false,
-        message: 'Order not found'
+        message: 'Order not found or unauthorized'
       });
     }
 
-    if (order.orderStatus !== 'pending') {
+    // Create status timeline
+    const statusTimeline = [];
+    const statusOrder = ['pending', 'confirmed', 'processing', 'shipped', 'delivered'];
+    const currentStatusIndex = statusOrder.indexOf(order.orderStatus);
+
+    statusOrder.forEach((status, index) => {
+      statusTimeline.push({
+        status,
+        label: status.charAt(0).toUpperCase() + status.slice(1),
+        completed: index <= currentStatusIndex,
+        current: index === currentStatusIndex,
+        date: index <= currentStatusIndex ? order.updatedAt : null
+      });
+    });
+
+    res.json({
+      success: true,
+      data: {
+        order,
+        timeline: statusTimeline
+      }
+    });
+
+  } catch (error) {
+    console.error('Error in trackOrder:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: error.message
+    });
+  }
+};
+
+// Cancel order (if not yet shipped)
+const cancelOrder = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const userId = req.user.id;
+
+    const order = await Order.findOne({ _id: orderId, user: userId });
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found or unauthorized'
+      });
+    }
+
+    // Check if order can be cancelled
+    if (['shipped', 'delivered', 'cancelled'].includes(order.orderStatus)) {
       return res.status(400).json({
         success: false,
-        message: 'Order cannot be cancelled'
+        message: `Order cannot be cancelled as it is already ${order.orderStatus}`
       });
-    }
-
-    // Restore product stock
-    for (const item of order.products) {
-      await Product.findByIdAndUpdate(
-        item.product._id,
-        { $inc: { stock: item.quantity } },
-        { session }
-      );
     }
 
     // Update order status
     order.orderStatus = 'cancelled';
-    await order.save({ session });
+    await order.save();
 
-    await session.commitTransaction();
+    // Here you might want to:
+    // 1. Restore product stock
+    // 2. Process refund if payment was completed
+    // 3. Send cancellation email
 
     res.json({
       success: true,
       message: 'Order cancelled successfully',
-      data: { order }
+      data: order
     });
 
   } catch (error) {
-    await session.abortTransaction();
-    console.error('Cancel order error:', error);
-
+    console.error('Error in cancelOrder:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to cancel order'
+      message: 'Internal server error',
+      error: error.message
     });
-  } finally {
-    session.endSession();
   }
 };
 
-// Update payment status
-exports.updatePaymentStatus = async (req, res) => {
+// Get order statistics for user
+const getOrderStats = async (req, res) => {
   try {
-    const { orderId } = req.params;
-    const { paymentStatus, stripePaymentIntentId, stripeSessionId } = req.body;
+    const userId = req.user.id;
 
-    const order = await Order.findById(orderId);
+    const stats = await Order.aggregate([
+      { $match: { user: userId } },
+      {
+        $group: {
+          _id: '$orderStatus',
+          count: { $sum: 1 },
+          totalAmount: { $sum: '$totalAmount' }
+        }
+      }
+    ]);
 
-    if (!order) {
-      return res.status(404).json({
-        success: false,
-        message: 'Order not found'
-      });
-    }
-
-    // Update payment details
-    order.paymentStatus = paymentStatus;
-    if (stripePaymentIntentId) order.stripePaymentIntentId = stripePaymentIntentId;
-    if (stripeSessionId) order.stripeSessionId = stripeSessionId;
-
-    // If payment completed, update order status
-    if (paymentStatus === 'completed') {
-      order.orderStatus = 'confirmed';
-    }
-
-    await order.save();
+    const totalOrders = await Order.countDocuments({ user: userId });
+    const totalSpent = await Order.aggregate([
+      { $match: { user: userId, paymentStatus: 'completed' } },
+      { $group: { _id: null, total: { $sum: '$totalAmount' } } }
+    ]);
 
     res.json({
       success: true,
-      message: 'Payment status updated successfully',
-      data: { order }
+      data: {
+        totalOrders,
+        totalSpent: totalSpent[0]?.total || 0,
+        statusBreakdown: stats
+      }
     });
 
   } catch (error) {
-    console.error('Update payment status error:', error);
+    console.error('Error in getOrderStats:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to update payment status'
+      message: 'Internal server error',
+      error: error.message
     });
   }
+};
+
+module.exports = {
+  getMyOrders,
+  getOrderDetails,
+  trackOrder,
+  cancelOrder,
+  getOrderStats
 };

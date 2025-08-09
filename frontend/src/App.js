@@ -30,6 +30,9 @@ import ProfilePage from './pages/user/UserProfile';
 import WishList from './pages/user/WishList';
 import OrderCancelled from './pages/user/OrderCancle';
 import OrderSuccess from './pages/user/OrderSuccess';
+import MyOrders from './pages/user/MyOrders';
+import ProductDetailsPage from './pages/user/ProductDetails';
+
 // Styles
 import './styles/globals.css';
 
@@ -57,11 +60,7 @@ function App() {
                     <Route path="/products-categories" element={<ProductsByCategory />} />
 
                     {/* Protected Routes - User Must Be Authenticated */}
-                    <Route path="/dashboard" element={
-                      <ProtectedRoute>
-                        <Dashboard />
-                      </ProtectedRoute>
-                    } /> 
+                   
 
                     <Route path="/search-results" element={
                       <ProtectedRoute>
@@ -73,40 +72,60 @@ function App() {
                       <ProtectedRoute>
                         <Cart />
                       </ProtectedRoute>
-                    } />  
+                    } />
 
                     <Route path="/wishlist" element={
                       <ProtectedRoute>
                         <WishList />
                       </ProtectedRoute>
-                    } />  
-                    
-                     <Route path="/profile" element={
+                    } />
+
+
+
+                    <Route path="/my-orders" element={
+                      <ProtectedRoute>
+                        <MyOrders />
+                      </ProtectedRoute>
+                    } />
+
+                    <Route path="/product/:productId" element={
+                      <ProtectedRoute>
+                        <ProductDetailsPage />
+                      </ProtectedRoute>
+                    } />
+
+                    <Route path="/profile" element={
                       <ProtectedRoute>
                         <ProfilePage />
                       </ProtectedRoute>
-                    } /> 
+                    } />
 
-                   
 
-                     <Route path="/order-success" element={
+
+                    <Route path="/order-success" element={
                       <ProtectedRoute>
                         <OrderSuccess />
                       </ProtectedRoute>
-                    } /> 
+                    } />
 
-                    
-                     <Route path="/order-cancelled" element={
+
+                    <Route path="/order-cancelled" element={
                       <ProtectedRoute>
                         <OrderCancelled />
                       </ProtectedRoute>
-                    } /> 
+                    } />
 
 
                     {/* Admin Only Routes */}
                     <Route path="/admindashboard" element={
                       <ProtectedRoute adminOnly={true}>
                         <AdminDashboard />
+                      </ProtectedRoute>
+                    } />
+
+                    <Route path="/get-orders" element={
+                      <ProtectedRoute adminOnly={true}>
+                        <Orders />
                       </ProtectedRoute>
                     } />
 
@@ -127,7 +146,7 @@ function App() {
                       </ProtectedRoute>
                     } />
 
-                   
+
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </Layout>

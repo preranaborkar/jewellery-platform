@@ -52,6 +52,23 @@ export const useProductsByCategory = () => {
   }
 }, []);
 
+
+// fetch product details by id
+  const fetchProductDetails = useCallback(async (productId) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await productService.getProductById(productId);
+      return response.data || response.product || {};
+
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   // Fetch products for all categories
   const fetchAllCategoriesWithProducts = useCallback(async (limit = 8) => {
     if (categories.length === 0) return;
@@ -207,6 +224,7 @@ export const useProductsByCategory = () => {
     // Actions
     fetchCategories,
     fetchProductsByCategory,
+    fetchProductDetails,
     fetchAllCategoriesWithProducts,
     loadMoreProducts,
     searchInCategory,
@@ -219,5 +237,6 @@ export const useProductsByCategory = () => {
     getCategoryById
   };
 };
+
 
 export default useProductsByCategory;

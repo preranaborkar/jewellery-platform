@@ -1,130 +1,103 @@
-// services/orderService.js
+// frontend/src/services/orderService.js
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
-// Create axios instance with default config
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: 10000,
-});
-
-// Add request interceptor for auth token
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+// Create axios instance with token
+const createAxiosInstance = () => {
+  const token = localStorage.getItem('token');
+  return axios.create({
+    baseURL: API_URL,
+    headers: {
+      'Authorization': token ? `Bearer ${token}` : '',
+      'Content-Type': 'application/json'
     }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
+  });
+};
 
-// Add response interceptor for error handling
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      window.location.href = '/login';
-    }
-    return Promise.reject(error);
-  }
-);
-
-// Order Service Functions
 export const orderService = {
-  // Create order from cart
-  createOrder: async (orderData) => {
+  // Get user's orders
+  getMyOrders: async () => {
     try {
-      const response = await api.post('/orders', orderData);
+      const api = createAxiosInstance();
+      const response = await api.get('/orders/my-orders');
       return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to create order');
-    }
-  },
-
-  // Create Stripe checkout session
-  createStripeCheckout: async (orderData) => {
-    try {
-      const response = await api.post('/orders/create-stripe-checkout', orderData);
-      return response.data;
-    } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to create checkout session');
-    }
-  },
-
-  // Verify Stripe payment
-  verifyStripePayment: async (sessionId) => {
-    try {
-      const response = await api.post('/orders/verify-stripe-payment', { sessionId });
-      return response.data;
-    } catch (error) {
-      throw new Error(error.response?.data?.message || 'Payment verification failed');
-    }
-  },
-
-  // Get user orders
-  getUserOrders: async (params = {}) => {
-    try {
-      const queryParams = new URLSearchParams(params).toString();
-      const response = await api.get(`/orders${queryParams ? `?${queryParams}` : ''}`);
-      return response.data;
-    } catch (error) {
+      console.error('Error fetching orders:', error);
       throw new Error(error.response?.data?.message || 'Failed to fetch orders');
     }
   },
 
-  // Get single order
-  getOrderById: async (orderId) => {
+  // Get single order details
+  getOrderDetails: async (orderId) => {
     try {
-      const response = await api.get(`/orders/${orderId}`);
+      const api = createAxiosInstance();
+      const response = await api.get(`/orders/order/${orderId}`);
       return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to fetch order');
+      console.error('Error fetching order details:', error);
+      throw new Error(error.response?.data?.message || 'Failed to fetch order details');
     }
   },
 
-  // Cancel order
-  cancelOrder: async (orderId) => {
+  // Add review for a product
+  addReview: async (orderId, reviewData) => {
     try {
-      const response = await api.put(`/orders/${orderId}/cancel`);
+      const api = createAxiosInstance();
+      const response = await api.post(`/orders/order/${orderId}/review`, reviewData);
       return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to cancel order');
+      console.error('Error adding review:', error);
+      throw new Error(error.response?.data?.message || 'Failed to add review');
     }
   },
 
-  // Update payment status (for payment integration)
-  updatePaymentStatus: async (orderId, paymentData) => {
+  // Update existing review
+  updateReview: async (reviewId, reviewData) => {
     try {
-      const response = await api.put(`/orders/${orderId}/payment`, paymentData);
+      const api = createAxiosInstance();
+      const response = await api.put(`/reviews/${reviewId}`, reviewData);
       return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to update payment status');
+      console.error('Error updating review:', error);
+      throw new Error(error.response?.data?.message || 'Failed to update review');
     }
   },
 
-  // Process Stripe payment (redirect to Stripe Checkout)
-  processStripePayment: async (orderData) => {
+
+  // Get user's review for a product
+  getUserReview: async (productId) => {
     try {
-      // Create checkout session
-      const response = await orderService.createStripeCheckout(orderData);
-      
-      if (response.success && response.data.sessionUrl) {
-        // Redirect to Stripe checkout
-        window.location.href = response.data.sessionUrl;
-        return { success: true };
-      } else {
-        throw new Error('Failed to create checkout session');
-      }
+      const api = createAxiosInstance();
+      const response = await api.get(`/reviews/user/${productId}`);
+      return response.data;
     } catch (error) {
-      throw error;
+      console.error('Error fetching user review:', error);
+      return null; // Return null if no review found instead of throwing error
+    }
+  },
+
+  // Get product rating summary
+  getProductRating: async (productId) => {
+    try {
+      const api = createAxiosInstance();
+      const response = await api.get(`/reviews/product/${productId}/rating`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching product rating:', error);
+      return null;
+    }
+  },
+
+  // Track order status
+  trackOrder: async (orderId) => {
+    try {
+      const api = createAxiosInstance();
+      const response = await api.get(`/orders/track/${orderId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error tracking order:', error);
+      throw new Error(error.response?.data?.message || 'Failed to track order');
     }
   }
 };
-
-export default orderService;

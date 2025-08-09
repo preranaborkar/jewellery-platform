@@ -1,5 +1,6 @@
 // components/ProductsByCategory.jsx
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Search,
   Package,
@@ -12,13 +13,16 @@ import {
   AlertCircle,
   X,
   Check,
-  ShoppingBag
+  ShoppingBag,
+  Users // Add this import
 } from 'lucide-react';
 import useProductsByCategory from '../../hooks/useProductsByCategory';
 import { useCart } from '../../hooks/useCart';
 import { useWishlist } from '../../hooks/useWishList';
+import { useReview } from '../../hooks/useOder';
 
 const ProductsByCategory = () => {
+    const navigate = useNavigate();
   const {
     categories,
     productsByCategory,
@@ -30,14 +34,13 @@ const ProductsByCategory = () => {
     fetchProductsByCategory,
     fetchAllCategoriesWithProducts,
     loadMoreProducts,
-
     clearError,
     setSelectedCategory,
     getCategoryProducts,
     getCategoryById
   } = useProductsByCategory();
 
-
+  const { getProductRating } = useReview();
   const {
     addToWishlist,
     removeFromWishlist,
@@ -66,6 +69,7 @@ const ProductsByCategory = () => {
   const [showQuantityModal, setShowQuantityModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
+  const [productRatings, setProductRatings] = useState({}); // Cache for product ratings
 
   // Load initial data
   useEffect(() => {
@@ -73,6 +77,53 @@ const ProductsByCategory = () => {
       fetchAllCategoriesWithProducts(8);
     }
   }, [categories, fetchAllCategoriesWithProducts]);
+
+  // Fetch ratings for all products when they are loaded
+  useEffect(() => {
+    const fetchProductRatings = async () => {
+      const allProducts = [];
+      
+      // Collect all products from all categories
+      Object.values(productsByCategory).forEach(categoryData => {
+        if (categoryData.products && Array.isArray(categoryData.products)) {
+          allProducts.push(...categoryData.products);
+        }
+      });
+
+      // Fetch ratings for products that don't have cached ratings
+      const ratingsToFetch = allProducts.filter(product => 
+        product._id && !productRatings[product._id] && !product.averageRating
+      );
+
+      if (ratingsToFetch.length > 0) {
+        const ratingsPromises = ratingsToFetch.map(async (product) => {
+          try {
+            const rating = await getProductRating(product._id);
+            return { productId: product._id, rating };
+          } catch (error) {
+            console.error(`Failed to fetch rating for product ${product._id}:`, error);
+            return { productId: product._id, rating: null };
+          }
+        });
+
+        const ratings = await Promise.all(ratingsPromises);
+        const ratingsMap = {};
+        ratings.forEach(({ productId, rating }) => {
+          if (rating) {
+            ratingsMap[productId] = rating;
+          }
+        });
+
+        if (Object.keys(ratingsMap).length > 0) {
+          setProductRatings(prev => ({ ...prev, ...ratingsMap }));
+        }
+      }
+    };
+
+    fetchProductRatings();
+  }, [productsByCategory, getProductRating, productRatings]);
+
+  
 
   // Handle category selection
   const handleCategorySelect = (categoryId) => {
@@ -158,11 +209,65 @@ const ProductsByCategory = () => {
     setShowQuantityModal(true);
   };
 
+  // Enhanced rating stars component with hover tooltips
+  const getRatingStars = (rating, size = 12, showEmpty = true, showTooltip = false) => {
+    const stars = [];
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 >= 0.5;
+
+    for (let i = 0; i < 5; i++) {
+      if (i < fullStars) {
+        stars.push(
+          <Star
+            key={i}
+            size={size}
+            className="fill-yellow-400 text-yellow-400"
+            title={showTooltip ? `${rating.toFixed(1)} out of 5 stars` : undefined}
+          />
+        );
+      } else if (i === fullStars && hasHalfStar) {
+        stars.push(
+          <div key={i} className="relative">
+            <Star size={size} className="text-gray-300" />
+            <div className="absolute inset-0 overflow-hidden" style={{ width: '50%' }}>
+              <Star 
+                size={size} 
+                className="fill-yellow-400 text-yellow-400"
+                title={showTooltip ? `${rating.toFixed(1)} out of 5 stars` : undefined}
+              />
+            </div>
+          </div>
+        );
+      } else if (showEmpty) {
+        stars.push(
+          <Star key={i} size={size} className="text-gray-300" />
+        );
+      }
+    }
+
+    return stars;
+  };
+
   // Handle proceed to order
   const handleProceedToOrder = (productId) => {
     // Navigate to checkout or order page
     // You can implement this based on your routing setup
     window.location.href = '/checkout';
+  };
+
+  // Add this function to manually refresh product rating
+  const refreshProductRating = async (productId) => {
+    try {
+      const rating = await getProductRating(productId);
+      if (rating) {
+        setProductRatings(prev => ({
+          ...prev,
+          [productId]: rating
+        }));
+      }
+    } catch (error) {
+      console.error(`Failed to refresh rating for product ${productId}:`, error);
+    }
   };
 
   // Format currency
@@ -173,17 +278,10 @@ const ProductsByCategory = () => {
     }).format(amount);
   };
 
-  // Get rating stars
-  const getRatingStars = (rating) => {
-    return Array.from({ length: 5 }, (_, i) => (
-      <Star
-        key={i}
-        size={14}
-        className={i < rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}
-      />
-    ));
+  
+  const handleProductClick = (productId) => {
+    navigate(`/product/${productId}`);
   };
-
   // Product Card Component
   const ProductCard = ({ product, isCompact = false }) => {
     const inCart = isInCart(product._id);
@@ -192,10 +290,16 @@ const ProductsByCategory = () => {
     const inWishlist = isInWishlist(product._id);
     const isAddingToWishlistThis = addingToWishlist.has(product._id);
 
+    // Get rating data for this specific product - prioritize API data, fallback to product data
+    const cachedRating = productRatings[product._id];
+    const displayRating = cachedRating?.averageRating || product.averageRating || 0;
+    const displayReviewCount = cachedRating?.reviewCount || product.reviewCount || 0;
+
     return (
       <div
         className={`rounded-lg shadow-lg overflow-hidden transition-transform hover:scale-105 ${isCompact ? 'h-auto' : 'h-full'}`}
         style={{ backgroundColor: '#D0B49F' }}
+       onClick={() => handleProductClick(product._id)}
       >
         {/* Product Image */}
         <div className={`relative bg-white overflow-hidden ${isCompact ? 'h-32' : 'h-48'}`}>
@@ -214,11 +318,13 @@ const ProductsByCategory = () => {
           {/* Quick Actions */}
           <div className="absolute top-2 right-2 flex flex-col gap-1">
             <button
-              onClick={() => handleWishlistToggle(product._id)}
+              onClick={(e) =>{
+                e.stopPropagation();
+                 handleWishlistToggle(product._id)}}
               disabled={isAddingToWishlistThis || wishlistLoading}
               className={`p-1.5 rounded-full shadow-lg transition-all duration-200 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed ${inWishlist
-                  ? 'bg-red-500 text-white'
-                  : 'bg-white hover:bg-gray-50'
+                ? 'bg-red-500 text-white'
+                : 'bg-white hover:bg-gray-50'
                 }`}
             >
               {isAddingToWishlistThis ? (
@@ -233,10 +339,11 @@ const ProductsByCategory = () => {
             </button>
           </div>
 
-          {/* Discount Badge */}
-          {product.discount && (
-            <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
-              -{product.discount}%
+          {/* Rating Badge - Top Center */}
+          {displayRating > 0 && (
+            <div className="absolute top-2 left-1/2 transform -translate-x-1/2 bg-white bg-opacity-95 backdrop-blur-sm text-xs font-medium px-2 py-1 rounded-full flex items-center gap-1 shadow-lg">
+              <Star size={12} className="fill-yellow-400 text-yellow-400" />
+              <span className="font-semibold text-gray-800">{displayRating.toFixed(1)}</span>
             </div>
           )}
 
@@ -247,11 +354,9 @@ const ProductsByCategory = () => {
               In Cart ({cartQuantity})
             </div>
           )}
-
-          
         </div>
 
-        {/* Product Info - KEEP ALL YOUR EXISTING PRODUCT INFO JSX AS IS */}
+        {/* Product Info */}
         <div className={`p-3 ${isCompact ? 'space-y-1' : 'space-y-2'}`}>
           <h3
             className={`font-semibold line-clamp-2 ${isCompact ? 'text-sm' : 'text-base'}`}
@@ -266,15 +371,52 @@ const ProductsByCategory = () => {
             </p>
           )}
 
-          {/* Rating */}
-          {product.averageRating > 0 && (
-            <div className="flex items-center gap-1">
-              <div className="flex">
-                {getRatingStars(Math.round(product.averageRating))}
+          {/* Enhanced Rating Display */}
+          {displayRating > 0 && (
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="flex items-center">
+                  {getRatingStars(displayRating, isCompact ? 14 : 16, true, true)}
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className={`font-semibold ${isCompact ? 'text-sm' : 'text-base'}`} style={{ color: '#523A28' }}>
+                    {displayRating.toFixed(1)}
+                  </span>
+                  <span className={`${isCompact ? 'text-xs' : 'text-sm'}`} style={{ color: '#A47551' }}>
+                    ({displayReviewCount})
+                  </span>
+                </div>
               </div>
-              <span className="text-xs" style={{ color: '#A47551' }}>
-                ({product.reviewCount || 0})
-              </span>
+              {displayReviewCount > 0 && (
+                <div className="flex items-center gap-1">
+                  <Users size={isCompact ? 12 : 14} style={{ color: '#A47551' }} />
+                  <span className="text-xs" style={{ color: '#A47551' }}>
+                    {displayReviewCount} {displayReviewCount === 1 ? 'review' : 'reviews'}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* No Rating Display */}
+          {displayRating === 0 && (
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="flex">
+                  {getRatingStars(0, isCompact ? 14 : 16)}
+                </div>
+                <span className={`${isCompact ? 'text-xs' : 'text-sm'}`} style={{ color: '#A47551' }}>
+                  No reviews yet
+                </span>
+              </div>
+              <button
+                onClick={() => refreshProductRating(product._id)}
+                className="text-xs px-2 py-1 rounded transition-colors hover:bg-opacity-80"
+                style={{ backgroundColor: '#A47551', color: 'white' }}
+                title="Refresh rating"
+              >
+                <RefreshCw size={10} />
+              </button>
             </div>
           )}
 
@@ -297,12 +439,12 @@ const ProductsByCategory = () => {
             </span>
           </div>
 
-          {/* KEEP ALL YOUR EXISTING ACTION BUTTONS JSX AS IS */}
+          {/* Action Buttons */}
           <div className="space-y-2">
             {!inCart ? (
               // Add to Cart Button
               <button
-                onClick={() => openQuantityModal(product)}
+                onClick={(e) => { e.stopPropagation();openQuantityModal(product)}}
                 disabled={product.stock === 0 || isAddingThisProduct || cartLoading}
                 className={`w-full font-medium rounded-lg transition-colors flex items-center justify-center gap-2 ${isCompact ? 'px-3 py-1.5 text-xs' : 'px-4 py-2 text-sm'} disabled:opacity-50 disabled:cursor-not-allowed`}
                 style={{
@@ -328,7 +470,7 @@ const ProductsByCategory = () => {
               // When item is in cart - show both Order and Remove buttons
               <div className="space-y-1">
                 <button
-                  onClick={() => handleProceedToOrder(product._id)}
+                  onClick={(e) => { e.stopPropagation(); handleProceedToOrder(product._id)}}
                   className={`w-full font-medium rounded-lg transition-colors flex items-center justify-center gap-2 ${isCompact ? 'px-3 py-1.5 text-xs' : 'px-4 py-2 text-sm'}`}
                   style={{
                     backgroundColor: '#2D5016',
@@ -340,7 +482,7 @@ const ProductsByCategory = () => {
                 </button>
 
                 <button
-                  onClick={() => handleRemoveFromCart(product._id)}
+                  onClick={(e) => {e.stopPropagation();handleRemoveFromCart(product._id)}}
                   disabled={isAddingThisProduct || cartLoading}
                   className={`w-full font-medium  rounded-lg transition-colors flex items-center justify-center gap-2 ${isCompact ? 'px-3 py-1 text-xs' : 'px-4 py-1.5 text-sm'} disabled:opacity-50 disabled:cursor-not-allowed`}
                   style={{
@@ -367,6 +509,7 @@ const ProductsByCategory = () => {
       </div>
     );
   };
+
   // Category Section Component
   const CategorySection = ({ category, isExpanded }) => {
     const categoryData = getCategoryProducts(category._id) || { products: [], totalProducts: 0 };
@@ -388,8 +531,6 @@ const ProductsByCategory = () => {
               {categoryData.totalProducts} items
             </span>
           </div>
-
-
         </div>
 
         {/* Category Description */}
@@ -398,8 +539,6 @@ const ProductsByCategory = () => {
             {category.description}
           </p>
         )}
-
-
 
         {/* Products Grid */}
         {displayProducts.length > 0 ? (
@@ -441,7 +580,6 @@ const ProductsByCategory = () => {
           <h1 className="text-3xl font-bold mb-2" style={{ color: '#523A28' }}>
             Products by Category
           </h1>
-
         </div>
 
         {/* Error Alerts */}
@@ -470,8 +608,6 @@ const ProductsByCategory = () => {
             </button>
           </div>
         )}
-
-
 
         {wishlistError && (
           <div className="mb-6 p-4 rounded-lg border border-red-300 bg-red-50 flex items-center gap-3">
@@ -562,6 +698,28 @@ const ProductsByCategory = () => {
                 <p className="text-sm mb-2" style={{ color: '#A47551' }}>
                   {selectedProduct.name}
                 </p>
+
+                {/* Rating in Modal */}
+                {(() => {
+                  const cachedRating = productRatings[selectedProduct._id];
+                  const modalRating = cachedRating?.averageRating || selectedProduct.averageRating || 0;
+                  const modalReviewCount = cachedRating?.reviewCount || selectedProduct.reviewCount || 0;
+                  
+                  return modalRating > 0 && (
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="flex">
+                        {getRatingStars(modalRating, 14)}
+                      </div>
+                      <span className="text-sm font-medium" style={{ color: '#523A28' }}>
+                        {modalRating.toFixed(1)}
+                      </span>
+                      <span className="text-sm" style={{ color: '#A47551' }}>
+                        ({modalReviewCount} reviews)
+                      </span>
+                    </div>
+                  );
+                })()}
+
                 <p className="text-sm mb-4" style={{ color: '#A47551' }}>
                   Price: {formatCurrency(selectedProduct.price)} each
                 </p>

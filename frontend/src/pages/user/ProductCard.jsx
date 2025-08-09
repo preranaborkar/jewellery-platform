@@ -1,43 +1,78 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../hooks/useCart';
-import { 
-  Heart, 
-  Package, 
-  Check, 
-  ShoppingCart, 
-  ShoppingBag, 
-  X, 
+import { useReview } from '../../hooks/useOder';
+import { useWishlist } from '../../hooks/useWishList';
+import {
+  Heart,
+  Package,
+  Check,
+  ShoppingCart,
+  ShoppingBag,
+  X,
   RefreshCw,
-  Star
+  Star,
+  Users
 } from 'lucide-react';
 
 const ProductCard = ({ product, isCompact = false }) => {
   const navigate = useNavigate();
-  const { 
-    cartItems, 
-    addToCart, 
-    removeFromCart, 
+  const {
+    cartItems,
+    addToCart,
+    removeFromCart,
     cartLoading,
     isInCart,
     getCartItemQuantity
   } = useCart();
-  
+  const {
+    addToWishlist,
+    removeFromWishlist,
+    toggleWishlist,
+    isInWishlist,
+    loading: wishlistLoading,
+    error: wishlistError,
+    clearError: clearWishlistError
+  } = useWishlist();
+  const { getProductRating } = useReview();
+
   const [addingToCart, setAddingToCart] = useState(new Set());
   const [showQuantityModal, setShowQuantityModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
+  const [productRating, setProductRating] = useState(null);
+
+  const [addingToWishlist, setAddingToWishlist] = useState(new Set());
+
+
 
   // Check if product is in cart
   const inCart = isInCart(product._id);
   const cartQuantity = getCartItemQuantity(product._id);
   const isAddingThisProduct = addingToCart.has(product._id);
 
+  
+  // Fetch product rating on component mount
+  useEffect(() => {
+    const fetchRating = async () => {
+      try {
+        const rating = await getProductRating(product._id);
+        if (rating) {
+          setProductRating(rating);
+        }
+      } catch (error) {
+        console.error('Failed to fetch rating:', error);
+      }
+    };
+
+    fetchRating();
+  }, [product._id, getProductRating]);
+
   const handleAddToCart = async (productId, selectedQuantity = 1) => {
     const newAddingToCart = new Set(addingToCart);
     newAddingToCart.add(productId);
     setAddingToCart(newAddingToCart);
-
+   
     try {
       await addToCart(productId, selectedQuantity);
       setShowQuantityModal(false);
@@ -46,7 +81,6 @@ const ProductCard = ({ product, isCompact = false }) => {
     } catch (error) {
       console.error('Failed to add to cart:', error);
     } finally {
-      // Use the current state, not the stale closure
       setAddingToCart(prev => {
         const updated = new Set(prev);
         updated.delete(productId);
@@ -55,7 +89,6 @@ const ProductCard = ({ product, isCompact = false }) => {
     }
   };
 
-  // Handle remove from cart
   const handleRemoveFromCart = async (productId) => {
     const newAddingToCart = new Set(addingToCart);
     newAddingToCart.add(productId);
@@ -74,12 +107,33 @@ const ProductCard = ({ product, isCompact = false }) => {
     }
   };
 
-  // Add this function to open quantity modal
-  const openQuantityModal = (product) => {
-    setSelectedProduct(product);
-    setQuantity(1);
-    setShowQuantityModal(true);
+const openQuantityModal = (product) => {
+  setSelectedProduct(product);
+  setQuantity(1);
+  setShowQuantityModal(true);
+};
+
+const inWishlist = isInWishlist(product._id);
+const isAddingToWishlistThis = addingToWishlist.has(product._id);
+
+const handleWishlistToggle = async (productId) => {
+  const newAddingToWishlist = new Set(addingToWishlist);
+  newAddingToWishlist.add(productId);
+  setAddingToWishlist(newAddingToWishlist);
+
+    try {
+      await toggleWishlist(productId);
+    } catch (error) {
+      console.error('Failed to toggle wishlist:', error);
+    } finally {
+      setAddingToWishlist(prev => {
+        const updated = new Set(prev);
+        updated.delete(productId);
+        return updated;
+      });
+    }
   };
+
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
@@ -89,21 +143,44 @@ const ProductCard = ({ product, isCompact = false }) => {
     }).format(amount);
   };
 
-  
+  // Enhanced rating stars component
+  const getRatingStars = (rating, size = 12, showEmpty = true) => {
+    const stars = [];
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 >= 0.5;
 
-  // Format currency
-  const getRatingStars = (rating) => {
-    return Array.from({ length: 5 }, (_, index) => (
-      <Star
-        key={index}
-        size={12}
-        className={index < rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}
-      />
-    ));
+    for (let i = 0; i < 5; i++) {
+      if (i < fullStars) {
+        stars.push(
+          <Star
+            key={i}
+            size={size}
+            className="fill-yellow-400 text-yellow-400"
+          />
+        );
+      } else if (i === fullStars && hasHalfStar) {
+        stars.push(
+          <div key={i} className="relative">
+            <Star size={size} className="text-gray-300" />
+            <div className="absolute inset-0 overflow-hidden" style={{ width: '50%' }}>
+              <Star size={size} className="fill-yellow-400 text-yellow-400" />
+            </div>
+          </div>
+        );
+      } else if (showEmpty) {
+        stars.push(
+          <Star key={i} size={size} className="text-gray-300" />
+        );
+      }
+    }
+
+    return stars;
   };
 
-  
-  // Handle proceed to order
+  // Get rating data - prioritize productRating from API, fallback to product data
+  const displayRating = productRating?.averageRating || product.averageRating || 0;
+  const displayReviewCount = productRating?.reviewCount || product.reviewCount || 0;
+
   const handleProceedToOrder = (productId) => {
     navigate(`/checkout?productId=${productId}`);
   };
@@ -130,8 +207,23 @@ const ProductCard = ({ product, isCompact = false }) => {
 
         {/* Quick Actions */}
         <div className="absolute top-2 right-2 flex flex-col gap-1">
-          <button className="p-1.5 rounded-full bg-white shadow-lg hover:bg-gray-50 transition-colors">
-            <Heart size={14} style={{ color: '#A47551' }} />
+          <button
+            onClick={() => handleWishlistToggle(product._id)}
+            disabled={isAddingToWishlistThis || wishlistLoading}
+            className={`p-1.5 rounded-full shadow-lg transition-all duration-200 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed ${inWishlist
+              ? 'bg-red-500 text-white'
+              : 'bg-white hover:bg-gray-50'
+              }`}
+          >
+            {isAddingToWishlistThis ? (
+              <RefreshCw size={14} className="animate-spin" />
+            ) : (
+              <Heart
+                size={14}
+                className={inWishlist ? 'fill-current' : ''}
+                style={{ color: inWishlist ? 'white' : '#A47551' }}
+              />
+            )}
           </button>
         </div>
 
@@ -139,6 +231,14 @@ const ProductCard = ({ product, isCompact = false }) => {
         {product.discount && (
           <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
             -{product.discount}%
+          </div>
+        )}
+
+        {/* Rating Badge - Top Center */}
+        {displayRating > 0 && (
+          <div className="absolute top-2 left-1/2 transform -translate-x-1/2 bg-white bg-opacity-95 backdrop-blur-sm text-xs font-medium px-2 py-1 rounded-full flex items-center gap-1 shadow-lg">
+            <Star size={12} className="fill-yellow-400 text-yellow-400" />
+            <span className="font-semibold text-gray-800">{displayRating.toFixed(1)}</span>
           </div>
         )}
 
@@ -167,14 +267,41 @@ const ProductCard = ({ product, isCompact = false }) => {
           </p>
         )}
 
-        {/* Rating */}
-        {product.averageRating > 0 && (
-          <div className="flex items-center gap-1">
-            <div className="flex">
-              {getRatingStars(Math.round(product.averageRating))}
+        {/* Enhanced Rating Display */}
+        {displayRating > 0 && (
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="flex items-center">
+                {getRatingStars(displayRating, isCompact ? 14 : 16)}
+              </div>
+              <div className="flex items-center gap-1">
+                <span className={`font-semibold ${isCompact ? 'text-sm' : 'text-base'}`} style={{ color: '#523A28' }}>
+                  {displayRating.toFixed(1)}
+                </span>
+                <span className={`${isCompact ? 'text-xs' : 'text-sm'}`} style={{ color: '#A47551' }}>
+                  ({displayReviewCount})
+                </span>
+              </div>
             </div>
-            <span className="text-xs" style={{ color: '#A47551' }}>
-              ({product.reviewCount || 0})
+            {displayReviewCount > 0 && (
+              <div className="flex items-center gap-1">
+                <Users size={isCompact ? 12 : 14} style={{ color: '#A47551' }} />
+                <span className="text-xs" style={{ color: '#A47551' }}>
+                  {displayReviewCount} {displayReviewCount === 1 ? 'review' : 'reviews'}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* No Rating Display */}
+        {displayRating === 0 && (
+          <div className="flex items-center gap-2">
+            <div className="flex">
+              {getRatingStars(0, isCompact ? 14 : 16)}
+            </div>
+            <span className={`${isCompact ? 'text-xs' : 'text-sm'}`} style={{ color: '#A47551' }}>
+              No reviews yet
             </span>
           </div>
         )}
@@ -201,7 +328,6 @@ const ProductCard = ({ product, isCompact = false }) => {
         {/* Action Buttons */}
         <div className="space-y-2">
           {!inCart ? (
-            // Add to Cart Button
             <button
               onClick={() => openQuantityModal(product)}
               disabled={product.stock === 0 || isAddingThisProduct || cartLoading}
@@ -226,7 +352,6 @@ const ProductCard = ({ product, isCompact = false }) => {
               )}
             </button>
           ) : (
-            // When item is in cart - show both Order and Remove buttons
             <div className="space-y-1">
               <button
                 onClick={() => handleProceedToOrder(product._id)}
@@ -265,7 +390,7 @@ const ProductCard = ({ product, isCompact = false }) => {
           )}
         </div>
       </div>
-      
+
       {/* Quantity Selection Modal */}
       {showQuantityModal && selectedProduct && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -278,6 +403,22 @@ const ProductCard = ({ product, isCompact = false }) => {
               <p className="text-sm mb-2" style={{ color: '#A47551' }}>
                 {selectedProduct.name}
               </p>
+
+              {/* Rating in Modal */}
+              {displayRating > 0 && (
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="flex">
+                    {getRatingStars(displayRating, 14)}
+                  </div>
+                  <span className="text-sm font-medium" style={{ color: '#523A28' }}>
+                    {displayRating.toFixed(1)}
+                  </span>
+                  <span className="text-sm" style={{ color: '#A47551' }}>
+                    ({displayReviewCount} reviews)
+                  </span>
+                </div>
+              )}
+
               <p className="text-sm mb-4" style={{ color: '#A47551' }}>
                 Price: {formatCurrency(selectedProduct.price)} each
               </p>

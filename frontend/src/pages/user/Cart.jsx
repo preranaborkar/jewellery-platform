@@ -492,26 +492,7 @@ const handleProceedToCheckout = async () => {
                   </div>
                 </div>
 
-                {/* Promo Code */}
-                <div className="mt-4 p-4 rounded-lg" style={{ backgroundColor: '#D0B49F' }}>
-                  <h4 className="font-medium mb-3" style={{ color: '#523A28' }}>
-                    Have a promo code?
-                  </h4>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      placeholder="Enter code"
-                      className="flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2"
-                      style={{ borderColor: '#A47551' }}
-                    />
-                    <button
-                      className="px-4 py-2 rounded-lg font-medium transition-colors"
-                      style={{ backgroundColor: '#A47551', color: 'white' }}
-                    >
-                      Apply
-                    </button>
-                  </div>
-                </div>
+                
               </div>
             </div>
           </div>

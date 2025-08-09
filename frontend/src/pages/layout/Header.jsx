@@ -246,18 +246,22 @@ const Header = () => {
           <div className="flex items-center space-x-4">
 
             {/* Admin Dashboard Link (when user is admin but not on admin page) */}
-            {user && isAdmin() && !shouldShowAdminNav && (
+            {user && isAdmin() && !shouldShowAdminNav &&  (
               <Link
                 to="/admindashboard"
-                className="relative p-2 text-[#523A28] hover:text-[#A47551] transition-colors duration-300 hover:bg-[#E4D4C8] rounded-full"
-                title="Admin Dashboard"
+                className={`relative px-3 py-2 text-sm font-medium transition-all duration-300 hover:text-[#A47551] ${isActiveLink('/admindashboard')
+                  ? 'text-[#A47551]'
+                  : 'text-[#523A28]'
+                  }`}
+                    title="Admin Dashboard"
               >
-                <BarChart3 className="h-5 w-5" />
+                Dashboard
+                {/* <BarChart3 className="h-5 w-5" /> */}
               </Link>
             )}
 
              {/* Wishlist (Hide on admin pages) */}
-            {isAuthenticated && (
+            {isAuthenticated &&  !shouldShowAdminNav &&  (
               <Link
                 to="/my-orders"
                 className="relative p-2 text-[#523A28] hover:text-[#A47551] transition-colors duration-300 hover:bg-[#E4D4C8] rounded-full"
@@ -268,7 +272,7 @@ const Header = () => {
             )}
 
             {/* Wishlist (Hide on admin pages) */}
-            {isAuthenticated && (
+            {isAuthenticated && !shouldShowAdminNav &&  (
               <Link
                 to="/wishlist"
                 className="relative p-2 text-[#523A28] hover:text-[#A47551] transition-colors duration-300 hover:bg-[#E4D4C8] rounded-full"
@@ -283,7 +287,7 @@ const Header = () => {
             )}
 
             {/* Cart (Hide on admin pages) */}
-            {isAuthenticated && (
+            {isAuthenticated && !shouldShowAdminNav &&   (
               <Link
                 to="/cart"
                 className="relative p-2 text-[#523A28] hover:text-[#A47551] transition-colors duration-300 hover:bg-[#E4D4C8] rounded-full"

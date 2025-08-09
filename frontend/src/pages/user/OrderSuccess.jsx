@@ -47,6 +47,8 @@ useEffect(() => {
         })
       });
 
+
+      console.log("Order success response:", response.ok, response);
       if (!response.ok) {
         throw new Error('Payment verification failed');
       }
@@ -235,24 +237,9 @@ useEffect(() => {
             </>
           )}
 
-          <div className="space-y-4">
-            <button
-              onClick={() => navigate('/orders')}
-              className="w-full px-6 py-3 rounded-lg font-semibold transition-colors"
-              style={{ backgroundColor: '#523A28', color: '#E4D4C8' }}
-            >
-              View Order Details
-            </button>
+          
 
-            <button
-              onClick={() => navigate('/products-categories')}
-              className="w-full px-6 py-3 rounded-lg border-2 font-semibold transition-colors"
-              style={{ borderColor: '#523A28', color: '#523A28' }}
-            >
-              Continue Shopping
-            </button>
-          </div>
-
+           
           
         </div>
       </div>

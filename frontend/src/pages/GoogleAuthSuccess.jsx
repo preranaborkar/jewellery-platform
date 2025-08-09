@@ -35,7 +35,7 @@ const GoogleAuthSuccess = () => {
                     if (loggedInUser.role === 'admin') {
                         navigate('/admindashboard');
                     } else {
-                        navigate('/dashboard');
+                        navigate('/');
                     }
                 } else {
                     // Missing data, redirect to login with error

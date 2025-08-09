@@ -70,4 +70,5 @@ router.post('/:id/reviews', protect, validateObjectId, validateReview, addProduc
 router.get('/:id', validateObjectId, getProductById);
 router.get('/', getAllProducts);
 
+
 module.exports = router;

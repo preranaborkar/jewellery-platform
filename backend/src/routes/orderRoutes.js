@@ -4,6 +4,16 @@ const router = express.Router();
 const { protect } = require('../middleware/auth');
 const Order = require('../models/Order'); // Adjust path as needed
 const Cart = require('../models/Cart');
+const { get } = require('mongoose');
+const { getMyOrders,
+  getOrderDetails,
+  trackOrder,
+  cancelOrder,
+  getOrderStats} = require('../controllers/orderController'); 
+
+
+ const { addReview } = require('../controllers/reviewController'); 
+
 
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);    
 router.use(protect);
@@ -248,4 +258,16 @@ router.delete('/cart/clear', async (req, res) => {
   }
 });
 
+
+router.use(protect);
+
+// User routes
+router.get('/my-orders', getMyOrders);
+router.get('/order/:orderId', getOrderDetails);
+router.get('/track/:orderId', trackOrder);
+router.put('/cancel/:orderId', cancelOrder);
+router.get('/stats', getOrderStats);
+
+// Add review for a product in an order
+router.post('/order/:orderId/review', addReview);
 module.exports = router;

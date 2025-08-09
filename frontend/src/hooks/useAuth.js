@@ -61,7 +61,7 @@ export const useLogin = () => {
                 if (userData.role === 'admin') {
                     navigate('/admindashboard');
                 } else {
-                    navigate('/dashboard');
+                    navigate('/');
                 }
             }
         } catch (err) {

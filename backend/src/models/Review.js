@@ -19,12 +19,15 @@ const reviewSchema = new mongoose.Schema({
         min: [1, 'Rating must be at least 1'],
         max: [5, 'Rating cannot exceed 5']
     },
-    comment: {
-        type: String,
-        required: [true, 'Comment is required'],
-        trim: true,
-        maxlength: [1000, 'Comment cannot exceed 1000 characters']
-    }
+   
+    createdAt: {
+    type: Date,
+    default: Date.now
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now
+  }
 }, {
     timestamps: true
 });
@@ -35,6 +38,6 @@ reviewSchema.index({ user: 1, product: 1 }, { unique: true });
 // Create indexes
 reviewSchema.index({ product: 1 });
 reviewSchema.index({ user: 1 });
-reviewSchema.index({ rating: -1 });
+
 
 module.exports = mongoose.model('Review', reviewSchema);

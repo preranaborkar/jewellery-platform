@@ -89,7 +89,8 @@ const getAllProducts = async (req, res) => {
 // Get single product by ID
 const getProductById = async (req, res) => {
     try {
-        const product = await Product.findById(req.params.id)
+       const productId = req.params.id;
+        const product = await Product.findById(productId)
             .populate('category', 'name description')
             .populate({
                 path: 'reviews',
